@@ -1,0 +1,60 @@
+@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+:root {
+  /* Simple Red & Black Theme */
+  --primary-red: #DC2626;
+  --light-red: #EF4444;
+  --dark-red: #991B1B;
+  --black-primary: #000000;
+  --black-secondary: #1F1F1F;
+  --black-tertiary: #2D2D2D;
+  --white: #FFFFFF;
+  --gray-light: #D1D5DB;
+  --gray-medium: #6B7280;
+  --gray-dark: #374151;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background-color: var(--black-primary);
+    color: var(--white);
+    min-height: 100vh;
+  }
+  
+  ::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  ::-webkit-scrollbar-track {
+    background: var(--black-secondary);
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    background: var(--primary-red);
+    border-radius: 10px;
+  }
+}
+
+@layer utilities {
+  .text-red {
+    color: var(--primary-red);
+  }
+  
+  .bg-red {
+    background-color: var(--primary-red);
+  }
+  
+  .border-red {
+    border-color: var(--primary-red);
+  }
+  
+  .simple-shadow {
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+  }
+}
