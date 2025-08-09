@@ -50,6 +50,7 @@ const api = axios.create({
 
 // Existing single file upload
 export const uploadPDF = async (file, persona) => {
+  // console.log(file, persona)
   const formData = new FormData()
   formData.append('file', file)
   formData.append('persona', persona)
@@ -60,7 +61,7 @@ export const uploadPDF = async (file, persona) => {
 
 // ✅ New multiple files upload
 export const uploadMultiplePDFs = async (files, persona) => {
-  console.log(`📚 Uploading ${files.length} files with persona: ${persona}`)
+  console.log(`Uploading ${files.length} files with persona: ${persona}`)
   
   const formData = new FormData()
   
