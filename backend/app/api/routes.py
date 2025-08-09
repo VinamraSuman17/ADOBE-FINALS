@@ -11,58 +11,87 @@ router = APIRouter()
 
 @router.post("/upload-multiple/")
 async def upload_and_analyze_multiple(files: list[UploadFile], persona: str = Form(...)):
-    """Multiple PDF upload with comparison and ranking"""
+    """Multiple PDF upload with comparison and ranking + individual and combined summaries"""
     try:
         if not files:
             raise HTTPException(status_code=400, detail="No files provided")
-        
+
         print(f"Received {len(files)} files for persona: {persona}")
-        
+
         results = []
         extractor = ProperPDFExtractor()
-        
+        combined_summaries = []  # store each summary text
+
         # ✅ Process each PDF individually
         for index, file in enumerate(files):
             if not file.filename.endswith('.pdf'):
-                raise HTTPException(status_code=400, detail=f"File {file.filename} must be a PDF")
-            
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"File {file.filename} must be a PDF"
+                )
+
             print(f"Processing file {index + 1}: {file.filename}")
-            
+
             # Read file content
             content = await file.read()
-            
+
             # Round 1A: Extract outline
             outline_result = extractor.extract_outline(content)
-            
-            # Round 1B: Persona analysis
+
+            # Round 1B: Persona analysis (already includes summary in single-file case)
             analysis_result = analyze_with_persona(content, persona)
-            
+
+            # ✅ Extract short summary + document title
+            summary_text = analysis_result.get("summary") or analysis_result.get("insights", {}).get("summary", "")
+            doc_title = analysis_result.get("document_info", {}).get("title") or file.filename
+
+            combined_summaries.append(summary_text)
+
             # Store individual result
             file_result = {
                 "file_index": index + 1,
                 "filename": file.filename,
+                "title": doc_title,
+                "summary": summary_text,
                 "file_size": len(content),
                 "outline": outline_result,
                 "analysis": analysis_result,
                 "connections": generate_connections(outline_result, analysis_result)
             }
-            
+
             results.append(file_result)
-        
+
         # ✅ Generate comparison and ranking
         comparison_analysis = generate_comparison_analysis(results, persona)
-        
+
+        # ✅ Create a combined summary
+        combined_summary_text = generate_combined_summary(combined_summaries, persona)
+
         return {
             "success": True,
             "total_files": len(files),
             "persona": persona,
             "individual_results": results,
+            "combined_summary": combined_summary_text,
             "comparison": comparison_analysis,
             "ranking": generate_ranking(results, persona)
         }
-        
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Processing failed: {str(e)}")
+
+
+def generate_combined_summary(individual_summaries: list[str], persona: str) -> str:
+    """
+    Creates a combined summary for multiple docs by simply merging model outputs,
+    without adding extra labels — same style as single-file mode.
+    """
+    if not individual_summaries:
+        return ""
+    # Just join all summaries from the model without altering text
+    return "\n\n".join([s for s in individual_summaries if s])
+
+
 
 def generate_comparison_analysis(results, persona):
     """Generate comparative analysis across multiple PDFs"""
