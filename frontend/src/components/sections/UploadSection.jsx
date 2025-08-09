@@ -377,37 +377,6 @@ const UploadSection = ({ onUploadSuccess, loading, setLoading }) => {
                 </button>
               </div>
             </div>
-
-            {/* Viewer Type Toggle (only for single mode) */}
-            {uploadMode === 'single' && (
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-300 mb-3">
-                  PDF Viewer Type
-                </label>
-                <div className="flex space-x-4">
-                  <button
-                    onClick={() => setUseAdobeViewer(true)}
-                    className={`px-4 py-2 rounded-lg text-sm ${
-                      useAdobeViewer 
-                        ? 'bg-red-600 text-white' 
-                        : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                    }`}
-                  >
-                    Adobe Embed API
-                  </button>
-                  <button
-                    onClick={() => setUseAdobeViewer(false)}
-                    className={`px-4 py-2 rounded-lg text-sm ${
-                      !useAdobeViewer 
-                        ? 'bg-red-600 text-white' 
-                        : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                    }`}
-                  >
-                    Browser Native
-                  </button>
-                </div>
-              </div>
-            )}
             
             {/* File Upload Area */}
             <div 
