@@ -1,6 +1,7 @@
 from fastapi import APIRouter, UploadFile, Form, HTTPException
 from app.models.outline_extractor import ProperPDFExtractor
 from app.models.persona_analyzer import analyze_with_persona
+from app.models.section_highlighter import SectionHighlighter
 import json
 from typing import List
 
@@ -185,6 +186,11 @@ async def upload_and_analyze(file: UploadFile, persona: str = Form(...)):
         # NEW: Connect the Dots Analysis
         connections = generate_connections(outline_result, analysis_result)
         
+        highlighter = SectionHighlighter()
+        highlighted_sections = highlighter.identify_relevant_sections(
+            outline_result, analysis_result, persona
+        )
+
         return {
             "success": True,
             "filename": file.filename,
