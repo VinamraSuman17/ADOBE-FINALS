@@ -95,3 +95,32 @@ export const healthCheck = async () => {
 }
 
 export default api
+
+
+// Add this to your frontend/src/api/api.js file
+
+// ✅ Generate Podcast API call
+export const generatePodcast = async (analysisData, selectedText, sessionId) => {
+  const formData = new FormData();
+  formData.append('analysis_data', JSON.stringify(analysisData));
+  formData.append('selected_text', selectedText);
+  formData.append('session_id', sessionId);
+  formData.append('voice_config', JSON.stringify({
+    speaker1: "en-US-JennyNeural",
+    speaker2: "en-US-GuyNeural"
+  }));
+
+  const response = await api.post('/generate-podcast/', formData);
+  return response.data;
+};
+
+// ✅ Get Session Podcasts
+export const getSessionPodcasts = async (sessionId) => {
+  const response = await api.get(`/session/${sessionId}/podcasts/`);
+  return response.data;
+};
+
+// ✅ Stream Audio File
+export const getAudioUrl = (filename) => {
+  return `${api.defaults.baseURL}/audio/${filename}`;
+};

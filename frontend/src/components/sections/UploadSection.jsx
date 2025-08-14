@@ -1,464 +1,1629 @@
-// import React, { useState } from 'react'
-// import { uploadPDF } from '../../api/api'
-// import Button from '../ui/Button'
-// import AdobePdfViewer from '../ui/AdobePdfViewer'
-// import Loader from '../common/Loader'
+// import React, { useState, useRef } from "react";
+// import Button from "../ui/Button";
+// import AdobePdfViewer from "../ui/AdobePdfViewer";
+// import Loader from "../common/Loader";
+//   import { ToastContainer, toast } from 'react-toastify';
 
-// const UploadSection = ({ onUploadSuccess, loading, setLoading }) => {
-//   const [file, setFile] = useState(null)
-//   const [pdfFile, setPdfFile] = useState(null)
-//   const [persona, setPersona] = useState('business_analyst')
-//   const [dragActive, setDragActive] = useState(false)
-//   const [isUploaded, setIsUploaded] = useState(false)
+// const UploadSection = ({ onWorkflowComplete, onUploadSuccess, loading, setLoading }) => {
+//   const [priorDocuments, setPriorDocuments] = useState([]);
+//   const [currentDocument, setCurrentDocument] = useState(null);
+//   const [stage, setStage] = useState('prior'); // 'prior' | 'current' | 'analysis'
+//   const [sessionId] = useState(() => `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`);
+//   const [priorUploadProgress, setPriorUploadProgress] = useState(0);
+//   const [currentUploadProgress, setCurrentUploadProgress] = useState(0);
+//   const [selectedText, setSelectedText] = useState(null);
+//   const [analysisResults, setAnalysisResults] = useState(null);
+//   const [analysisLoading, setAnalysisLoading] = useState(false);
+//   const pdfViewerRef = useRef(null);
 
-//   const personas = [
-//     { value: 'student', label: 'Student', description: 'Academic analysis and learning focus' },
-//     { value: 'researcher', label: 'Researcher', description: 'Scientific and research methodology' },
-//     { value: 'business_analyst', label: 'Business Analyst', description: 'Business intelligence and metrics' },
-//     { value: 'legal_professional', label: 'Legal Professional', description: 'Legal document analysis' },
-//     { value: 'financial_analyst', label: 'Financial Analyst', description: 'Financial data and reporting' },
-//     { value: 'project_manager', label: 'Project Manager', description: 'Project planning and execution' },
-//     { value: 'consultant', label: 'Consultant', description: 'Strategic analysis and recommendations' },
-//     { value: 'educator', label: 'Educator', description: 'Educational content and curriculum' },
-//     { value: 'technical_writer', label: 'Technical Writer', description: 'Technical documentation analysis' },
-//     { value: 'executive', label: 'Executive', description: 'Strategic overview and decision making' }
-//   ]
-
-//   const handleDrag = (e) => {
-//     e.preventDefault()
-//     e.stopPropagation()
-//     if (e.type === 'dragenter' || e.type === 'dragover') {
-//       setDragActive(true)
-//     } else if (e.type === 'dragleave') {
-//       setDragActive(false)
-//     }
-//   }
-
-//   const handleDrop = (e) => {
-//     e.preventDefault()
-//     e.stopPropagation()
-//     setDragActive(false)
-
-//     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-//       const droppedFile = e.dataTransfer.files[0]
-//       if (droppedFile.type === 'application/pdf') {
-//         setFile(droppedFile)
-//         setPdfFile(droppedFile)
-//         setIsUploaded(false)
-//       } else {
-//         alert('Please upload a PDF file only')
-//       }
-//     }
-//   }
-
-//   const handleFileChange = (e) => {
-//     if (e.target.files && e.target.files[0]) {
-//       const selectedFile = e.target.files[0]
-//       if (selectedFile.type === 'application/pdf') {
-//         setFile(selectedFile)
-//         setPdfFile(selectedFile)
-//         setIsUploaded(false)
-//       } else {
-//         alert('Please upload a PDF file only')
-//       }
-//     }
-//   }
-
-//   const handleUpload = async () => {
-//     if (!file) {
-//       alert('Please select a PDF file first')
-//       return
+//   // Handle prior documents upload (20-30 PDFs)
+//   const handlePriorDocumentsUpload = async (files) => {
+//     if (!files || files.length === 0) {
+//       toast("Please select at least 1 PDF file");
+//       return;
 //     }
 
-//     setLoading(true)
+//     if (files.length > 50) {
+//       toast("Maximum 30 files allowed for prior documents");
+//       return;
+//     }
+
+//     setLoading(true);
+//     setPriorUploadProgress(0);
+
 //     try {
-//         console.log(file, persona)
-//       const result = await uploadPDF(file, persona)
-//       onUploadSuccess(result)
-//       setIsUploaded(true)
-//       console.log('Upload successful:', result)
+//       const formData = new FormData();
+//       Array.from(files).forEach((file, index) => {
+//         if (file.type === 'application/pdf') {
+//           formData.append('files', file);
+//         }
+//       });
+//       formData.append('user_session_id', sessionId);
+
+//       const response = await fetch('http://localhost:8080/ingest-prior-documents/', {
+//         method: 'POST',
+//         body: formData,
+//         onUploadProgress: (progressEvent) => {
+//           const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+//           setPriorUploadProgress(percentCompleted);
+//         }
+//       });
+
+//       if (!response.ok) {
+//         throw new Error(`Upload failed: ${response.status}`);
+//       }
+
+//       const data = await response.json();
+//       setPriorDocuments(Array.from(files));
+      
+//       console.log(`✅ Uploaded ${data.documents_processed} prior documents`);
+//       toast(`Successfully uploaded ${data.documents_processed} prior documents!`);
+
 //     } catch (error) {
-//       console.error('Upload failed:', error)
-//       alert('Upload failed: ' + (error.response?.data?.detail || error.message))
+//       console.error('Prior documents upload failed:', error);
+//       toast('Upload failed: ' + error.message);
 //     } finally {
-//       setLoading(false)
+//       setLoading(false);
+//       setPriorUploadProgress(0);
 //     }
-//   }
+//   };
+
+//   // Handle current document upload (1 PDF)
+//   const handleCurrentDocumentUpload = async (file) => {
+//     if (!file) {
+//       toast("Please select a PDF file");
+//       return;
+//     }
+
+//     if (file.type !== 'application/pdf') {
+//       toast("Please select a PDF file only");
+//       return;
+//     }
+
+//     setLoading(true);
+//     setCurrentUploadProgress(0);
+
+//     try {
+//       const formData = new FormData();
+//       formData.append('file', file);
+//       formData.append('user_session_id', sessionId);
+
+//       const response = await fetch('http://localhost:8080/set-current-document/', {
+//         method: 'POST',
+//         body: formData,
+//         onUploadProgress: (progressEvent) => {
+//           const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+//           setCurrentUploadProgress(percentCompleted);
+//         }
+//       });
+
+//       if (!response.ok) {
+//         throw new Error(`Upload failed: ${response.status}`);
+//       }
+
+//       const data = await response.json();
+//       setCurrentDocument(file);
+      
+//       console.log(`✅ Current document uploaded: ${data.filename}`);
+//       toast("Current document ready! Now you can select text to find insights.");
+
+//     } catch (error) {
+//       console.error('Current document upload failed:', error);
+//       toast('Upload failed: ' + error.message);
+//     } finally {
+//       setLoading(false);
+//       setCurrentUploadProgress(0);
+//     }
+//   };
+
+//   // Handle text selection from Adobe PDF Viewer
+//   const handleTextSelection = async (selectionData) => {
+//     if (!selectionData?.text || selectionData.text.length < 10) {
+//       toast("Please select a longer text passage (at least 10 characters)");
+//       return;
+//     }
+
+//     console.log('📝 Text selected:', selectionData);
+//     setSelectedText(selectionData);
+//     setAnalysisLoading(true);
+
+//     try {
+//       const formData = new FormData();
+//       formData.append('selection_text', selectionData.text);
+//       formData.append('page_number', selectionData.page.toString());
+//       formData.append('user_session_id', sessionId);
+
+//       const response = await fetch('http://localhost:8080/analyze-selection/', {
+//         method: 'POST',
+//         body: formData
+//       });
+
+//       if (!response.ok) {
+//         throw new Error(`Analysis failed: ${response.status}`);
+//       }
+
+//       const results = await response.json();
+//       setAnalysisResults(results);
+      
+//       console.log('✅ Analysis completed:', results);
+      
+//       // Trigger parent callback
+//       onUploadSuccess?.({
+//         priorDocuments,
+//         currentDocument,
+//         selectedText: selectionData,
+//         analysisResults: results,
+//         sessionId
+//       });
+
+//     } catch (error) {
+//       console.error('Selection analysis failed:', error);
+//       toast('Analysis failed: ' + error.message);
+//     } finally {
+//       setAnalysisLoading(false);
+//     }
+//   };
+
+//   // Navigate to snippet location
+//   const navigateToSnippet = (snippet) => {
+//     console.log('🔗 Navigating to:', snippet);
+//     if (pdfViewerRef.current?.navigateToPage && snippet.page) {
+//       pdfViewerRef.current.navigateToPage(snippet.page - 1);
+//     }
+//   };
 
 //   return (
 //     <section id="upload" className="py-24 bg-gray-900">
-//       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+//       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+//         {/* Header */}
 //         <div className="text-center mb-16">
-//           <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
-//             Document <span className="text-red">Upload</span>
+//           <h2 className="text-4xl font-bold text-white mb-6">
+//             Adobe Challenge - <span className="text-red-600">Document Analysis</span>
 //           </h2>
-//           <p className="text-xl text-gray-300 max-w-3xl mx-auto">
-//             Upload your PDF document and select your professional role for comprehensive AI-powered analysis.
+//           <p className="text-xl text-gray-300 max-w-4xl mx-auto">
+//             Step 1: Upload your document library (20-30 PDFs) → Step 2: Upload current reading document → Step 3: Select text for insights
 //           </p>
 //         </div>
 
-//         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-//           {/* Upload Form */}
-//           <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
-//             <h3 className="text-2xl font-semibold text-white mb-6">Document Processing</h3>
+//         {/* Progress Indicator */}
+//         <div className="flex justify-center mb-12">
+//           <div className="flex items-center space-x-4">
+//             <div className={`flex items-center space-x-2 ${stage === 'prior' ? 'text-red-600' : priorDocuments.length > 0 ? 'text-green-400' : 'text-gray-500'}`}>
+//               <div className={`w-8 h-8 rounded-full flex items-center justify-center ${stage === 'prior' ? 'bg-red-600 text-white' : priorDocuments.length > 0 ? 'bg-green-400 text-black' : 'bg-gray-600'}`}>1</div>
+//               <span className="font-medium">Prior Documents ({priorDocuments.length}/30)</span>
+//             </div>
+//             <div className="w-12 h-0.5 bg-gray-600"></div>
+//             <div className={`flex items-center space-x-2 ${stage === 'current' ? 'text-red-600' : currentDocument ? 'text-green-400' : 'text-gray-500'}`}>
+//               <div className={`w-8 h-8 rounded-full flex items-center justify-center ${stage === 'current' ? 'bg-red-600 text-white' : currentDocument ? 'bg-green-400 text-black' : 'bg-gray-600'}`}>2</div>
+//               <span className="font-medium">Current Document</span>
+//             </div>
+//             <div className="w-12 h-0.5 bg-gray-600"></div>
+//             <div className={`flex items-center space-x-2 ${stage === 'analysis' ? 'text-red-600' : selectedText ? 'text-green-400' : 'text-gray-500'}`}>
+//               <div className={`w-8 h-8 rounded-full flex items-center justify-center ${stage === 'analysis' ? 'bg-red-600 text-white' : selectedText ? 'bg-green-400 text-black' : 'bg-gray-600'}`}>3</div>
+//               <span className="font-medium">Text Analysis</span>
+//             </div>
+//           </div>
+//         </div>
 
-//             {/* File Upload Area */}
-//             <div
-//               className={`border-2 border-dashed rounded-lg p-8 text-center mb-6 transition-all ${
-//                 dragActive
-//                   ? 'border-red-600 bg-red-600/10'
-//                   : 'border-gray-600 hover:border-gray-500'
-//               }`}
-//               onDragEnter={handleDrag}
-//               onDragLeave={handleDrag}
-//               onDragOver={handleDrag}
-//               onDrop={handleDrop}
-//             >
-//               <div className="space-y-4">
-//                 <div className={`text-6xl ${file ? 'text-green-400' : 'text-gray-500'}`}>
-//                   {file ? '✅' : '📄'}
-//                 </div>
+//         <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+//           {/* LEFT COLUMN - Upload Interface */}
+//           <div className="space-y-8">
+            
+//             {/* Stage 1: Prior Documents Upload */}
+//             <div className={`bg-gray-800 rounded-lg p-6 border ${stage === 'prior' ? 'border-red-600' : priorDocuments.length > 0 ? 'border-green-400' : 'border-gray-700'}`}>
+//               <h3 className="text-2xl font-bold text-white mb-4">
+//                 📚 Step 1: Upload Prior Documents (Library)
+//               </h3>
+//               <p className="text-gray-300 mb-6">
+//                 Upload 20-30 PDFs that represent documents you've previously read. These will be your knowledge base for finding connections.
+//               </p>
+              
+//               {priorDocuments.length === 0 ? (
 //                 <div>
-//                   <p className="text-gray-300">
-//                     {file ? `Selected: ${file.name}` : 'Drag and drop your PDF document here'}
-//                   </p>
-//                   <label className="cursor-pointer text-red-600 hover:text-red-500 font-medium">
-//                     or browse files
+//                   <input
+//                     type="file"
+//                     multiple
+//                     accept=".pdf"
+//                     onChange={(e) => handlePriorDocumentsUpload(e.target.files)}
+//                     className="hidden"
+//                     id="prior-docs-input"
+//                     disabled={loading}
+//                   />
+//                   <label 
+//                     htmlFor="prior-docs-input" 
+//                     className="cursor-pointer block w-full p-8 border-2 border-dashed border-gray-600 rounded-lg text-center hover:border-gray-500 transition-colors"
+//                   >
+//                     <div className="text-6xl text-gray-500 mb-4">📄</div>
+//                     <p className="text-white font-medium">Click to select 20-30 PDF files</p>
+//                     <p className="text-gray-400 text-sm mt-2">or drag and drop multiple PDFs here</p>
+//                   </label>
+                  
+//                   {priorUploadProgress > 0 && (
+//                     <div className="mt-4">
+//                       <div className="flex justify-between text-sm text-gray-300 mb-2">
+//                         <span>Uploading prior documents...</span>
+//                         <span>{priorUploadProgress}%</span>
+//                       </div>
+//                       <div className="w-full bg-gray-700 rounded-full h-2">
+//                         <div 
+//                           className="bg-red-600 h-2 rounded-full transition-all duration-300"
+//                           style={{ width: `${priorUploadProgress}%` }}
+//                         />
+//                       </div>
+//                     </div>
+//                   )}
+//                 </div>
+//               ) : (
+//                 <div>
+//                   <div className="flex items-center space-x-2 text-green-400 mb-4">
+//                     <span className="text-2xl">✅</span>
+//                     <span className="font-medium">{priorDocuments.length} documents uploaded successfully!</span>
+//                   </div>
+//                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-32 overflow-y-auto mb-4">
+//                     {priorDocuments.slice(0, 10).map((file, idx) => (
+//                       <div key={idx} className="text-xs bg-gray-700 text-gray-300 p-2 rounded">
+//                         {file.name}
+//                       </div>
+//                     ))}
+//                     {priorDocuments.length > 10 && (
+//                       <div className="text-xs text-gray-400 p-2">
+//                         ... and {priorDocuments.length - 10} more files
+//                       </div>
+//                     )}
+//                   </div>
+//                   <Button 
+//                     variant="secondary" 
+//                     size="sm" 
+//                     onClick={() => setStage('current')}
+//                     className="w-full"
+//                   >
+//                     Next: Upload Current Document →
+//                   </Button>
+//                 </div>
+//               )}
+//             </div>
+
+//             {/* Stage 2: Current Document Upload */}
+//             {(priorDocuments.length > 0 || stage !== 'prior') && (
+//               <div className={`bg-gray-800 rounded-lg p-6 border ${stage === 'current' ? 'border-red-600' : currentDocument ? 'border-green-400' : 'border-gray-700'}`}>
+//                 <h3 className="text-2xl font-bold text-white mb-4">
+//                   📖 Step 2: Upload Current Document
+//                 </h3>
+//                 <p className="text-gray-300 mb-6">
+//                   Upload the PDF you're currently reading. You'll select text from this document to find connections with your prior documents.
+//                 </p>
+                
+//                 {!currentDocument ? (
+//                   <div>
 //                     <input
 //                       type="file"
 //                       accept=".pdf"
-//                       onChange={handleFileChange}
+//                       onChange={(e) => {
+//                         setStage('current')
+//                         handleCurrentDocumentUpload(e.target.files[0])
+//                         setStage('analysis')
+//                       }}
 //                       className="hidden"
+//                       id="current-doc-input"
+//                       disabled={loading}
 //                     />
-//                   </label>
-//                 </div>
-//                 <p className="text-sm text-gray-500">PDF files only, maximum 10MB</p>
-//               </div>
-//             </div>
-
-//             {/* Persona Selection */}
-//             <div className="mb-6">
-//               <label className="block text-sm font-medium text-gray-300 mb-3">
-//                 Professional Role Selection
-//               </label>
-//               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-64 overflow-y-auto">
-//                 {personas.map((p) => (
-//                   <div
-//                     key={p.value}
-//                     onClick={() => setPersona(p.value)}
-//                     className={`cursor-pointer p-3 rounded-lg border-2 transition-all ${
-//                       persona === p.value
-//                         ? 'border-red-600 bg-red-600/10'
-//                         : 'border-gray-600 hover:border-gray-500'
-//                     }`}
-//                   >
-//                     <div className="font-medium text-sm text-white">{p.label}</div>
-//                     <div className="text-xs text-gray-400">{p.description}</div>
+//                     <label 
+//                       htmlFor="current-doc-input" 
+//                       className="cursor-pointer block w-full p-6 border-2 border-dashed border-gray-600 rounded-lg text-center hover:border-gray-500 transition-colors"
+//                     >
+//                       <div className="text-4xl text-gray-500 mb-3">📄</div>
+//                       <p className="text-white font-medium">Click to select 1 PDF file</p>
+//                       <p className="text-gray-400 text-sm mt-1">Your current reading document</p>
+//                     </label>
+                    
+//                     {currentUploadProgress > 0 && (
+//                       <div className="mt-4">
+//                         <div className="flex justify-between text-sm text-gray-300 mb-2">
+//                           <span>Uploading current document...</span>
+//                           <span>{currentUploadProgress}%</span>
+//                         </div>
+//                         <div className="w-full bg-gray-700 rounded-full h-2">
+//                           <div 
+//                             className="bg-red-600 h-2 rounded-full transition-all duration-300"
+//                             style={{ width: `${currentUploadProgress}%` }}
+//                           />
+//                         </div>
+//                       </div>
+//                     )}
 //                   </div>
-//                 ))}
-//               </div>
-//             </div>
-
-//             {/* Processing Status */}
-//             {file && (
-//               <div className="mb-4 p-3 bg-gray-700 rounded-lg border border-gray-600">
-//                 <div className="flex items-center justify-between">
+//                 ) : (
 //                   <div>
-//                     <div className="text-sm text-white font-medium">Ready for Analysis</div>
-//                     <div className="text-xs text-gray-400">File: {file.name} • Persona: {persona}</div>
+//                     <div className="flex items-center space-x-2 text-green-400 mb-4">
+//                       <span className="text-2xl">✅</span>
+//                       <span className="font-medium">Current document: {currentDocument.name}</span>
+//                     </div>
+//                     <Button 
+//                       variant="secondary" 
+//                       size="sm" 
+//                       onClick={() => setStage('analysis')}
+//                       className="w-full"
+//                     >
+//                       Next: Start Text Selection →
+//                     </Button>
 //                   </div>
-//                   <div className="text-2xl">
-//                     {isUploaded ? '✅' : '⏳'}
+//                 )}
+//               </div>
+//             )}
+
+//             {/* Stage 3: Selection Instructions */}
+//             {currentDocument && (
+//               <div className={`bg-gray-800 rounded-lg p-6 border ${stage === 'analysis' ? 'border-red-600' : 'border-gray-700'}`}>
+//                 <h3 className="text-2xl font-bold text-white mb-4">
+//                   🎯 Step 3: Select Text for Analysis
+//                 </h3>
+//                 <p className="text-gray-300 mb-4">
+//                   Now select any text in the PDF viewer (right side) to find relevant connections from your {priorDocuments.length} prior documents.
+//                 </p>
+                
+//                 {selectedText && (
+//                   <div className="bg-gray-700 p-4 rounded-lg mb-4">
+//                     <h4 className="font-bold text-white mb-2">Selected Text:</h4>
+//                     <p className="text-gray-300 text-sm bg-gray-600 p-2 rounded">
+//                       "{selectedText.text.substring(0, 200)}{selectedText.text.length > 200 ? '...' : ''}"
+//                     </p>
+//                     <p className="text-xs text-gray-400 mt-2">Page {selectedText.page}</p>
 //                   </div>
+//                 )}
+
+//                 {analysisLoading && (
+//                   <div className="flex items-center space-x-3 text-yellow-400">
+//                     <Loader />
+//                     <span>Analyzing selection across {priorDocuments.length} prior documents...</span>
+//                   </div>
+//                 )}
+
+//                 {analysisResults && (
+//                   <div className="mt-4 p-4 bg-green-900/20 border border-green-400 rounded-lg">
+//                     <div className="flex items-center space-x-2 text-green-400 mb-2">
+//                       <span className="text-xl">🎉</span>
+//                       <span className="font-medium">Analysis Complete!</span>
+//                     </div>
+//                     <p className="text-sm text-gray-300">
+//                       Found {analysisResults.relevant_snippets?.length || 0} relevant sections from your prior documents.
+//                     </p>
+//                   </div>
+//                 )}
+//               </div>
+//             )}
+//           </div>
+
+//           {/* RIGHT COLUMN - PDF Viewer & Results */}
+//           <div className="space-y-6">
+//             {currentDocument && (
+//               <div className="bg-gray-800 rounded-lg p-4 border border-gray-700">
+//                 <h3 className="text-xl font-bold text-white mb-4">Current Document Viewer</h3>
+//                 <div className="min-h-[600px] bg-gray-900 rounded-lg">
+//                   <AdobePdfViewer 
+//                     ref={pdfViewerRef}
+//                     pdfFile={currentDocument}
+//                     onTextSelection={handleTextSelection}
+//                   />
 //                 </div>
 //               </div>
 //             )}
 
-//             {/* Upload Button */}
-//             <Button
-//               variant="primary"
-//               size="lg"
-//               onClick={handleUpload}
-//               disabled={!file || loading}
-//               className="w-full"
-//             >
-//               {loading ? <Loader /> : (
-//                 <>
-//                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-//                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-//                   </svg>
-//                   <span>Process Document</span>
-//                 </>
-//               )}
-//             </Button>
+//             {analysisResults && (
+//               <AnalysisResultsPanel 
+//                 results={analysisResults}
+//                 onSnippetClick={navigateToSnippet}
+//               />
+//             )}
 //           </div>
-
-//           {/* Adobe PDF Viewer */}
-//           <AdobePdfViewer pdfFile={pdfFile} isUploaded={isUploaded} />
 //         </div>
+
+//         {loading && (
+//           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+//             <div className="bg-gray-800 p-6 rounded-lg text-center">
+//               <Loader />
+//               <p className="text-white mt-4">Processing...</p>
+//             </div>
+//           </div>
+//         )}
 //       </div>
 //     </section>
-//   )
-// }
+//   );
+// };
 
-// export default UploadSection
+// // Analysis Results Panel Component
+// const AnalysisResultsPanel = ({ results, onSnippetClick }) => {
+//   const [activeTab, setActiveTab] = useState('snippets');
 
-import React, { useState } from "react";
-import { uploadPDF, uploadMultiplePDFs } from "../../api/api";
+//   return (
+//     <div className="bg-gray-800 rounded-lg p-4 border border-gray-700">
+//       <h3 className="text-xl font-bold text-white mb-4">Analysis Results</h3>
+      
+//       {/* Tab Navigation */}
+//       <div className="flex space-x-2 mb-6">
+//         {['snippets', 'insights', 'podcast'].map(tab => (
+//           <button 
+//             key={tab}
+//             onClick={() => setActiveTab(tab)}
+//             className={`px-4 py-2 rounded text-sm font-medium transition-colors ${
+//               activeTab === tab 
+//                 ? 'bg-red-600 text-white' 
+//                 : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+//             }`}
+//           >
+//             {tab.charAt(0).toUpperCase() + tab.slice(1)}
+//           </button>
+//         ))}
+//       </div>
+      
+//       {/* Tab Content */}
+//       {activeTab === 'snippets' && (
+//         <div className="space-y-3">
+//           <h4 className="font-bold text-white mb-3">
+//             📋 Relevant Sections from Prior Documents ({results.relevant_snippets?.length || 0})
+//           </h4>
+//           {results.relevant_snippets?.map((snippet, index) => (
+//             <div 
+//               key={index}
+//               className="p-3 bg-gray-700 border border-gray-600 rounded cursor-pointer hover:bg-gray-600 transition-colors"
+//               onClick={() => onSnippetClick(snippet)}
+//             >
+//               <div className="flex justify-between items-start mb-2">
+//                 <div className="text-sm font-medium text-red-400">{snippet.document_name}</div>
+//                 <div className="text-xs text-gray-400">
+//                   Page {snippet.page} • {(snippet.similarity_score * 100).toFixed(0)}% relevant
+//                 </div>
+//               </div>
+//               <div className="text-gray-300 text-sm">{snippet.section_text}</div>
+//               <div className="text-xs text-blue-400 mt-2">Click to navigate →</div>
+//             </div>
+//           ))}
+//         </div>
+//       )}
+      
+//       {activeTab === 'insights' && (
+//         <div className="space-y-4">
+//           <h4 className="font-bold text-white mb-3">🔍 AI-Generated Insights</h4>
+//           {results.insights && Object.entries(results.insights).map(([category, items]) => (
+//             <div key={category} className="bg-gray-700 p-4 rounded">
+//               <h5 className="font-medium text-red-400 capitalize mb-2">{category}</h5>
+//               <ul className="list-disc pl-5 space-y-1">
+//                 {Array.isArray(items) ? items.map((item, idx) => (
+//                   <li key={idx} className="text-gray-300 text-sm">{item}</li>
+//                 )) : (
+//                   <li className="text-gray-300 text-sm">{items}</li>
+//                 )}
+//               </ul>
+//             </div>
+//           ))}
+//         </div>
+//       )}
+      
+//       {activeTab === 'podcast' && (
+//         <div className="bg-gray-700 p-6 rounded text-center">
+//           <h4 className="font-bold text-white mb-4">🎧 Contextual Audio Overview</h4>
+//           <p className="text-gray-300 text-sm mb-6">
+//             Generate an engaging podcast discussion about your selected text using insights from your prior documents.
+//           </p>
+//           <Button variant="primary" size="lg">
+//             🎙️ Generate Audio Podcast
+//           </Button>
+//         </div>
+//       )}
+//     </div>
+//   );
+// };
+
+// export default UploadSection;
+
+
+
+import React, { useState, useRef, useCallback } from "react";
 import Button from "../ui/Button";
 import AdobePdfViewer from "../ui/AdobePdfViewer";
 import Loader from "../common/Loader";
-// import SimplePdfViewer from "../ui/SimplePdfViewer";
+import { ToastContainer, toast } from 'react-toastify';
 
-const UploadSection = ({ onUploadSuccess, loading, setLoading }) => {
-  const [files, setFiles] = useState([]);
-  const [singleFile, setSingleFile] = useState(null);
-  const [persona, setPersona] = useState("business_analyst");
-  const [dragActive, setDragActive] = useState(false);
-  const [isUploaded, setIsUploaded] = useState(false);
-  const [uploadMode, setUploadMode] = useState("single");
-  const [useAdobeViewer] = useState(true);
-  const [currentFileIndex, setCurrentFileIndex] = useState(0);
+const UploadSection = ({ onWorkflowComplete, onUploadSuccess, loading, setLoading }) => {
+  const [priorDocuments, setPriorDocuments] = useState([]);
+  const [currentDocument, setCurrentDocument] = useState(null);
+  const [stage, setStage] = useState('prior'); // 'prior' | 'current' | 'analysis'
+  const [sessionId] = useState(() => `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`);
+  const [priorUploadProgress, setPriorUploadProgress] = useState(0);
+  const [currentUploadProgress, setCurrentUploadProgress] = useState(0);
+  const [selectedText, setSelectedText] = useState(null);
+  const [analysisResults, setAnalysisResults] = useState(null);
+  const [analysisLoading, setAnalysisLoading] = useState(false);
+  
+  // ✅ Enhanced state for DEEP AI-powered features
+  const [podcastData, setPodcastData] = useState(null);
+  const [isPodcastGenerating, setIsPodcastGenerating] = useState(false);
+  const [isPodcastPlaying, setIsPodcastPlaying] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const [isDeepAiAnalysisLoading, setIsDeepAiAnalysisLoading] = useState(false);
+  
+  const pdfViewerRef = useRef(null);
+  const audioRef = useRef(null);
 
-  // 🆕 Summaries state
-  const [multiSummaries, setMultiSummaries] = useState([]);
-  const [combinedSummary, setCombinedSummary] = useState("");
-  const [singleSummary, setSingleSummary] = useState("");
-
-  const personas = [
-    { value: "student", label: "Student", description: "Academic analysis and learning focus" },
-    { value: "researcher", label: "Researcher", description: "Scientific and research methodology" },
-    { value: "business_analyst", label: "Business Analyst", description: "Business intelligence and metrics" },
-    { value: "legal_professional", label: "Legal Professional", description: "Legal document analysis" },
-    { value: "financial_analyst", label: "Financial Analyst", description: "Financial data and reporting" },
-    { value: "project_manager", label: "Project Manager", description: "Project planning and execution" },
-    { value: "consultant", label: "Consultant", description: "Strategic analysis and recommendations" },
-    { value: "educator", label: "Educator", description: "Educational content and curriculum" },
-    { value: "technical_writer", label: "Technical Writer", description: "Technical documentation analysis" },
-    { value: "executive", label: "Executive", description: "Strategic overview and decision making" }
-  ];
-
-  const goPrev = () => {
-    setCurrentFileIndex((prev) => (prev > 0 ? prev - 1 : files.length - 1));
-  };
-
-  const goNext = () => {
-    setCurrentFileIndex((prev) => (prev < files.length - 1 ? prev + 1 : 0));
-  };
-
-  const handleDrag = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (e.type === "dragenter" || e.type === "dragover") {
-      setDragActive(true);
-    } else if (e.type === "dragleave") {
-      setDragActive(false);
-    }
-  };
-
-  const handleDrop = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDragActive(false);
-    if (e.dataTransfer.files) handleFileSelection(e.dataTransfer.files);
-  };
-
-  const handleFileChange = (e) => {
-    if (e.target.files) handleFileSelection(e.target.files);
-  };
-
-  const handleFileSelection = (fileList) => {
-    const pdfFiles = Array.from(fileList).filter((file) => file.type === "application/pdf");
-    if (pdfFiles.length === 0) {
-      alert("Please upload PDF files only");
+  // Handle prior documents upload (20-30 PDFs)
+  const handlePriorDocumentsUpload = async (files) => {
+    if (!files || files.length === 0) {
+      toast("Please select at least 1 PDF file");
       return;
     }
 
-    if (uploadMode === "single") {
-      if (pdfFiles.length > 1) return alert("Select only one PDF in single mode");
-      setSingleFile(pdfFiles[0]);
-      setFiles([]);
-    } else {
-      if (pdfFiles.length > 5) return alert("Maximum 5 files for multiple mode");
-      setFiles(pdfFiles);
-      setSingleFile(null);
+    if (files.length > 50) {
+      toast("Maximum 30 files allowed for prior documents");
+      return;
     }
-    setIsUploaded(false);
-  };
-
-  const handleUpload = async () => {
-    if (uploadMode === "single" && !singleFile) return alert("Please select a PDF");
-    if (uploadMode === "multiple" && files.length === 0) return alert("Please select PDF files");
 
     setLoading(true);
+    setPriorUploadProgress(0);
+
     try {
-      let result;
-      if (uploadMode === "single") {
-        result = await uploadPDF(singleFile, persona);
-        setSingleSummary(result.analysis?.summary || "");
-      } else {
-        result = await uploadMultiplePDFs(files, persona);
-        setMultiSummaries(result.individual_results || []);
-        setCombinedSummary(result.combined_summary || "");
+      const formData = new FormData();
+      Array.from(files).forEach((file, index) => {
+        if (file.type === 'application/pdf') {
+          formData.append('files', file);
+        }
+      });
+      formData.append('user_session_id', sessionId);
+
+      const response = await fetch('http://localhost:8080/ingest-prior-documents/', {
+        method: 'POST',
+        body: formData
+      });
+
+      if (!response.ok) {
+        throw new Error(`Upload failed: ${response.status}`);
       }
-      onUploadSuccess?.(result);
-      setIsUploaded(true);
+
+      const data = await response.json();
+      setPriorDocuments(Array.from(files));
+      
+      console.log(`✅ Uploaded ${data.documents_processed} prior documents`);
+      toast(`Successfully uploaded ${data.documents_processed} prior documents for AI analysis!`);
+
     } catch (error) {
-      alert("Upload failed: " + (error.response?.data?.detail || error.message));
+      console.error('Prior documents upload failed:', error);
+      toast('Upload failed: ' + error.message);
     } finally {
       setLoading(false);
+      setPriorUploadProgress(0);
     }
   };
 
-  const removeFile = (index) => {
-    setFiles(files.filter((_, i) => i !== index));
+  // Handle current document upload (1 PDF)
+  const handleCurrentDocumentUpload = async (file) => {
+    if (!file) {
+      toast("Please select a PDF file");
+      return;
+    }
+
+    if (file.type !== 'application/pdf') {
+      toast("Please select a PDF file only");
+      return;
+    }
+
+    setLoading(true);
+    setCurrentUploadProgress(0);
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('user_session_id', sessionId);
+
+      const response = await fetch('http://localhost:8080/set-current-document/', {
+        method: 'POST',
+        body: formData
+      });
+
+      if (!response.ok) {
+        throw new Error(`Upload failed: ${response.status}`);
+      }
+
+      const data = await response.json();
+      setCurrentDocument(file);
+      
+      console.log(`✅ Current document uploaded: ${data.filename}`);
+      toast("Current document ready! Now select text for deep AI-powered insights.");
+
+    } catch (error) {
+      console.error('Current document upload failed:', error);
+      toast('Upload failed: ' + error.message);
+    } finally {
+      setLoading(false);
+      setCurrentUploadProgress(0);
+    }
+  };
+
+  // ✅ ENHANCED text selection with DEEP AI insights
+  const handleTextSelection = async (selectionData) => {
+    if (!selectionData?.text || selectionData.text.length < 15) {
+      toast("Please select more text (at least 15 characters) for comprehensive AI analysis");
+      return;
+    }
+
+    console.log('📝 Text selected for deep analysis:', selectionData);
+    setSelectedText(selectionData);
+    setAnalysisLoading(true);
+    setIsDeepAiAnalysisLoading(true);
+
+    try {
+      const formData = new FormData();
+      formData.append('selection_text', selectionData.text);
+      formData.append('page_number', selectionData.page.toString());
+      formData.append('user_session_id', sessionId);
+
+      console.log('🤖 Requesting DEEP Gemini AI analysis...');
+      const response = await fetch('http://localhost:8080/analyze-selection/', {
+        method: 'POST',
+        body: formData
+      });
+
+      if (!response.ok) {
+        throw new Error(`Analysis failed: ${response.status}`);
+      }
+
+      const results = await response.json();
+      setAnalysisResults(results);
+      
+      console.log('✅ Deep AI analysis completed:', results);
+      toast(`🤖 Deep AI insights generated! Found ${results.metadata?.total_insights || 0} insights across ${results.metadata?.insight_categories || 0} categories.`);
+      
+      // Trigger parent callback
+      onUploadSuccess?.({
+        priorDocuments,
+        currentDocument,
+        selectedText: selectionData,
+        analysisResults: results,
+        sessionId,
+        aiEnhanced: true,
+        deepAnalysis: true
+      });
+
+    } catch (error) {
+      console.error('Deep AI analysis failed:', error);
+      toast('AI analysis failed: ' + error.message);
+    } finally {
+      setAnalysisLoading(false);
+      setIsDeepAiAnalysisLoading(false);
+    }
+  };
+
+  // ✅ ENHANCED podcast generation with DEEP AI insights
+  const handleGeneratePodcast = useCallback(async () => {
+    if (!analysisResults) {
+      toast("No analysis results available for podcast generation");
+      return;
+    }
+
+    setIsPodcastGenerating(true);
+    
+    try {
+      console.log('🎧 Generating DEEP AI-enhanced podcast...');
+
+      const response = await fetch('http://localhost:8080/generate-podcast/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          analysis_data: analysisResults,
+          selected_text: selectedText?.text || '',
+          session_id: sessionId,
+          voice_config: {
+            speaker1: "AI Research Host",
+            speaker2: "Deep Analysis Expert"
+          }
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`Backend error: ${response.status}`);
+      }
+
+      const podcastResult = await response.json();
+      
+      if (podcastResult.success) {
+        setPodcastData(podcastResult.podcast);
+        console.log('✅ Deep AI-enhanced podcast generated:', podcastResult.podcast);
+        toast("🎧 Deep AI-enhanced podcast ready! Advanced insights in audio format.");
+      } else {
+        throw new Error(podcastResult.message || 'Podcast generation failed');
+      }
+
+    } catch (error) {
+      console.error('❌ Podcast generation failed:', error);
+      toast('Podcast generation failed: ' + error.message);
+    } finally {
+      setIsPodcastGenerating(false);
+    }
+  }, [analysisResults, selectedText, sessionId]);
+
+  // ✅ Enhanced audio controls
+  const togglePodcastPlayback = useCallback(() => {
+    if (audioRef.current && podcastData) {
+      try {
+        if (isPodcastPlaying) {
+          audioRef.current.pause();
+        } else {
+          if (audioRef.current.src !== podcastData.audio_url) {
+            audioRef.current.src = podcastData.audio_url;
+            audioRef.current.load();
+          }
+          
+          const playPromise = audioRef.current.play();
+          if (playPromise !== undefined) {
+            playPromise.then(() => {
+              console.log('✅ Audio playback started');
+              setIsPodcastPlaying(true);
+            }).catch((error) => {
+              console.error('❌ Audio playback failed:', error);
+              toast('Audio playback failed. Please try again.');
+              setIsPodcastPlaying(false);
+            });
+          }
+        }
+      } catch (error) {
+        console.error('❌ Playback toggle error:', error);
+        toast('Audio control error: ' + error.message);
+        setIsPodcastPlaying(false);
+      }
+    } else {
+      toast('Audio not ready. Please regenerate the podcast.');
+    }
+  }, [isPodcastPlaying, podcastData]);
+
+  // Audio event handlers
+  const handleAudioTimeUpdate = () => {
+    if (audioRef.current) {
+      setCurrentTime(audioRef.current.currentTime);
+    }
+  };
+
+  const handleAudioLoadedMetadata = () => {
+    if (audioRef.current) {
+      setDuration(audioRef.current.duration);
+    }
+  };
+
+  const handleAudioError = (e) => {
+    console.error('❌ Audio error:', e);
+    toast('Audio playback error. Please try regenerating the podcast.');
+    setIsPodcastPlaying(false);
+  };
+
+  // Navigate to snippet location
+  const navigateToSnippet = (snippet) => {
+    console.log('🔗 Navigating to:', snippet);
+    if (pdfViewerRef.current?.navigateToPage && snippet.page) {
+      pdfViewerRef.current.navigateToPage(snippet.page - 1);
+    }
   };
 
   return (
     <section id="upload" className="py-24 bg-gray-900">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Enhanced Header */}
         <div className="text-center mb-16">
           <h2 className="text-4xl font-bold text-white mb-6">
-            Document <span className="text-red">Upload</span>
+            Adobe Challenge - <span className="text-red-600">Deep AI Document Intelligence</span>
           </h2>
-          <p className="text-xl text-gray-300 max-w-3xl mx-auto">
-            Upload your PDFs for AI analysis — single or multiple comparison mode.
+          <div className="flex items-center justify-center space-x-4 mb-4">
+            <div className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-purple-600/20 to-blue-600/20 rounded-full border border-purple-500/30">
+              <span className="text-2xl">🤖</span>
+              <span className="text-sm text-purple-300 font-medium">Powered by Gemini 1.5 Pro</span>
+            </div>
+            <div className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-green-600/20 to-emerald-600/20 rounded-full border border-green-500/30">
+              <span className="text-xl">🧠</span>
+              <span className="text-sm text-green-300 font-medium">Deep Analysis Engine</span>
+            </div>
+          </div>
+          <p className="text-xl text-gray-300 max-w-4xl mx-auto">
+            Upload your document library → Upload current document → Select text for revolutionary AI insights
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* LEFT - Upload Form */}
-          <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
-            {/* Mode Selection */}
-            <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-300 mb-3">Upload Mode</label>
-              <div className="flex space-x-4">
-                <button
-                  onClick={() => { setUploadMode("single"); setFiles([]); setSingleFile(null); }}
-                  className={`px-4 py-2 rounded-lg text-sm ${uploadMode === "single" ? "bg-red-600 text-white" : "bg-gray-700 text-gray-300"}`}
-                >📄 Single PDF</button>
-                <button
-                  onClick={() => { setUploadMode("multiple"); setFiles([]); setSingleFile(null); }}
-                  className={`px-4 py-2 rounded-lg text-sm ${uploadMode === "multiple" ? "bg-red-600 text-white" : "bg-gray-700 text-gray-300"}`}
-                >📚 Multiple PDFs</button>
-              </div>
+        {/* Enhanced Progress Indicator */}
+        <div className="flex justify-center mb-12">
+          <div className="flex items-center space-x-4">
+            <div className={`flex items-center space-x-2 ${stage === 'prior' ? 'text-red-600' : priorDocuments.length > 0 ? 'text-green-400' : 'text-gray-500'}`}>
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${stage === 'prior' ? 'bg-red-600 text-white' : priorDocuments.length > 0 ? 'bg-green-400 text-black' : 'bg-gray-600'}`}>1</div>
+              <span className="font-medium">Knowledge Base ({priorDocuments.length}/30)</span>
             </div>
-
-            {/* Drop Zone */}
-            <div
-              className={`border-2 border-dashed rounded-lg p-8 text-center mb-6 ${dragActive ? "border-red-600 bg-red-600/10" : "border-gray-600"}`}
-              onDragEnter={handleDrag} onDragLeave={handleDrag} onDragOver={handleDrag} onDrop={handleDrop}
-            >
-              <div className={`text-6xl ${ (uploadMode === "single" && singleFile) || (uploadMode==="multiple" && files.length>0) ? "text-green-400" : "text-gray-500"}`}>
-                📄
-              </div>
-              <p className="text-gray-300">
-                {uploadMode === "single"
-                  ? singleFile ? `Selected: ${singleFile.name}` : "Drag & drop your PDF"
-                  : files.length > 0 ? `Selected: ${files.length} files` : "Drag & drop PDFs (max 5)"}
-              </p>
-              <label className="cursor-pointer text-red-600 hover:text-red-500">
-                or browse files
-                <input type="file" accept=".pdf" multiple={uploadMode === "multiple"} onChange={handleFileChange} className="hidden" />
-              </label>
+            <div className="w-12 h-0.5 bg-gray-600"></div>
+            <div className={`flex items-center space-x-2 ${stage === 'current' ? 'text-red-600' : currentDocument ? 'text-green-400' : 'text-gray-500'}`}>
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${stage === 'current' ? 'bg-red-600 text-white' : currentDocument ? 'bg-green-400 text-black' : 'bg-gray-600'}`}>2</div>
+              <span className="font-medium">Current Document</span>
             </div>
-
-            {/* Files List - Multiple Mode */}
-            {uploadMode === "multiple" && files.length > 0 && (
-              <div className="mb-6 space-y-2 max-h-32 overflow-y-auto">
-                {files.map((file, idx) => (
-                  <div key={idx} className="flex items-center justify-between bg-gray-700 rounded p-2">
-                    <span className="text-sm text-white truncate">{file.name}</span>
-                    <button onClick={() => removeFile(idx)} className="text-red-400 hover:text-red-300 ml-2">✕</button>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* Persona Selection */}
-            <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-300 mb-3">Professional Role</label>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-64 overflow-y-auto">
-                {personas.map(p => (
-                  <div key={p.value} onClick={() => setPersona(p.value)}
-                    className={`cursor-pointer p-3 rounded-lg border-2 ${persona === p.value ? "border-red-600 bg-red-600/10" : "border-gray-600"}`}>
-                    <div className="font-medium text-sm text-white">{p.label}</div>
-                    <div className="text-xs text-gray-400">{p.description}</div>
-                  </div>
-                ))}
-              </div>
+            <div className="w-12 h-0.5 bg-gray-600"></div>
+            <div className={`flex items-center space-x-2 ${stage === 'analysis' ? 'text-red-600' : selectedText ? 'text-green-400' : 'text-gray-500'}`}>
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${stage === 'analysis' ? 'bg-red-600 text-white' : selectedText ? 'bg-green-400 text-black' : 'bg-gray-600'}`}>3</div>
+              <span className="font-medium">Deep AI Analysis</span>
             </div>
-
-            {/* Upload Button */}
-            <Button variant="primary" size="lg" onClick={handleUpload}
-              disabled={(uploadMode==="single" && !singleFile) || (uploadMode==="multiple" && files.length===0) || loading}
-              className="w-full">
-              {loading ? <Loader /> : uploadMode === "single" ? "Analyze Document" : `Compare & Rank ${files.length} Docs`}
-            </Button>
           </div>
+        </div>
 
-          {/* RIGHT - Viewer + Summaries */}
-          {uploadMode === "single" ? (
-            <div>
-              {useAdobeViewer
-                ? <AdobePdfViewer pdfFile={singleFile} isUploaded={isUploaded} />
-                : <SimplePdfViewer pdfFile={singleFile} isUploaded={isUploaded} />}
-              {isUploaded && singleSummary && (
-                <div className="mt-4 bg-gray-700 p-4 rounded-lg">
-                  <h4 className="text-white font-medium mb-2">📄 Summary</h4>
-                  <p className="text-gray-300 whitespace-pre-line">{singleSummary}</p>
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+          {/* LEFT COLUMN - Upload Interface */}
+          <div className="space-y-8">
+            
+            {/* Stage 1: Prior Documents Upload */}
+            <div className={`bg-gray-800 rounded-lg p-6 border ${stage === 'prior' ? 'border-red-600' : priorDocuments.length > 0 ? 'border-green-400' : 'border-gray-700'}`}>
+              <h3 className="text-2xl font-bold text-white mb-4">
+                📚 Step 1: Build AI Knowledge Base
+              </h3>
+              <p className="text-gray-300 mb-6">
+                Upload 20-30 PDFs to create your intelligent document library. The AI will use these for deep cross-document analysis and breakthrough insights.
+              </p>
+              
+              {priorDocuments.length === 0 ? (
+                <div>
+                  <input
+                    type="file"
+                    multiple
+                    accept=".pdf"
+                    onChange={(e) => handlePriorDocumentsUpload(e.target.files)}
+                    className="hidden"
+                    id="prior-docs-input"
+                    disabled={loading}
+                  />
+                  <label 
+                    htmlFor="prior-docs-input" 
+                    className="cursor-pointer block w-full p-8 border-2 border-dashed border-gray-600 rounded-lg text-center hover:border-gray-500 transition-colors"
+                  >
+                    <div className="text-6xl text-gray-500 mb-4">🧠</div>
+                    <p className="text-white font-medium">Click to select 20-30 PDF files</p>
+                    <p className="text-gray-400 text-sm mt-2">Build your AI knowledge base</p>
+                  </label>
+                  
+                  {priorUploadProgress > 0 && (
+                    <div className="mt-4">
+                      <div className="flex justify-between text-sm text-gray-300 mb-2">
+                        <span>Building AI knowledge base...</span>
+                        <span>{priorUploadProgress}%</span>
+                      </div>
+                      <div className="w-full bg-gray-700 rounded-full h-2">
+                        <div 
+                          className="bg-red-600 h-2 rounded-full transition-all duration-300"
+                          style={{ width: `${priorUploadProgress}%` }}
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div>
+                  <div className="flex items-center space-x-2 text-green-400 mb-4">
+                    <span className="text-2xl">✅</span>
+                    <span className="font-medium">{priorDocuments.length} documents indexed for AI analysis!</span>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-32 overflow-y-auto mb-4">
+                    {priorDocuments.slice(0, 10).map((file, idx) => (
+                      <div key={idx} className="text-xs bg-gray-700 text-gray-300 p-2 rounded">
+                        🧠 {file.name}
+                      </div>
+                    ))}
+                    {priorDocuments.length > 10 && (
+                      <div className="text-xs text-gray-400 p-2">
+                        ... and {priorDocuments.length - 10} more AI-indexed files
+                      </div>
+                    )}
+                  </div>
+                  <Button 
+                    variant="secondary" 
+                    size="sm" 
+                    onClick={() => setStage('current')}
+                    className="w-full"
+                  >
+                    Next: Upload Current Document →
+                  </Button>
                 </div>
               )}
             </div>
-          ) : (
-            <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
-              {files.length > 0 && (
-                <>
-                  {/* Navigation */}
-                  <div className="flex items-center gap-4">
-                    <button onClick={goPrev} className="p-2 bg-gray-700 rounded hover:bg-gray-600">⬅</button>
-                    <div className="flex-1 min-h-[500px] bg-gray-900 rounded">
-                      {useAdobeViewer
-                        ? <AdobePdfViewer pdfFile={files[currentFileIndex]} isUploaded={isUploaded} />
-                        : <SimplePdfViewer pdfFile={files[currentFileIndex]} isUploaded={isUploaded} />}
-                    </div>
-                    <button onClick={goNext} className="p-2 bg-gray-700 rounded hover:bg-gray-600">➡</button>
+
+            {/* Stage 2: Current Document Upload */}
+            {(priorDocuments.length > 0 || stage !== 'prior') && (
+              <div className={`bg-gray-800 rounded-lg p-6 border ${stage === 'current' ? 'border-red-600' : currentDocument ? 'border-green-400' : 'border-gray-700'}`}>
+                <h3 className="text-2xl font-bold text-white mb-4">
+                  📖 Step 2: Upload Analysis Target
+                </h3>
+                <p className="text-gray-300 mb-6">
+                  Upload the PDF you're currently reading. Select text from this document to discover AI-powered connections with your knowledge base.
+                </p>
+                
+                {!currentDocument ? (
+                  <div>
+                    <input
+                      type="file"
+                      accept=".pdf"
+                      onChange={(e) => {
+                        setStage('current')
+                        handleCurrentDocumentUpload(e.target.files[0])
+                        setStage('analysis')
+                      }}
+                      className="hidden"
+                      id="current-doc-input"
+                      disabled={loading}
+                    />
+                    <label 
+                      htmlFor="current-doc-input" 
+                      className="cursor-pointer block w-full p-6 border-2 border-dashed border-gray-600 rounded-lg text-center hover:border-gray-500 transition-colors"
+                    >
+                      <div className="text-4xl text-gray-500 mb-3">🎯</div>
+                      <p className="text-white font-medium">Click to select 1 PDF file</p>
+                      <p className="text-gray-400 text-sm mt-1">Your analysis target document</p>
+                    </label>
+                    
+                    {currentUploadProgress > 0 && (
+                      <div className="mt-4">
+                        <div className="flex justify-between text-sm text-gray-300 mb-2">
+                          <span>Preparing for AI analysis...</span>
+                          <span>{currentUploadProgress}%</span>
+                        </div>
+                        <div className="w-full bg-gray-700 rounded-full h-2">
+                          <div 
+                            className="bg-red-600 h-2 rounded-full transition-all duration-300"
+                            style={{ width: `${currentUploadProgress}%` }}
+                          />
+                        </div>
+                      </div>
+                    )}
                   </div>
-
-                  {/* File Counter */}
-                  <div className="text-gray-400 text-sm mt-2 text-center">
-                    File {currentFileIndex + 1} of {files.length}
+                ) : (
+                  <div>
+                    <div className="flex items-center space-x-2 text-green-400 mb-4">
+                      <span className="text-2xl">✅</span>
+                      <span className="font-medium">Analysis target: {currentDocument.name}</span>
+                    </div>
+                    <Button 
+                      variant="secondary" 
+                      size="sm" 
+                      onClick={() => setStage('analysis')}
+                      className="w-full"
+                    >
+                      Next: Start Deep AI Analysis →
+                    </Button>
                   </div>
+                )}
+              </div>
+            )}
 
-                  {/* Individual Summary */}
-                  {isUploaded && multiSummaries.length > 0 && (
-                    <div className="mt-4 bg-gray-700 p-4 rounded-lg">
-                      <h4 className="text-white font-medium mb-2">
-                        📄 Summary — {multiSummaries[currentFileIndex]?.title || multiSummaries[currentFileIndex]?.filename}
-                      </h4>
-                      <p className="text-gray-300 whitespace-pre-line">
-                        {multiSummaries[currentFileIndex]?.summary || "No summary available"}
-                      </p>
+            {/* Stage 3: Deep AI Analysis Instructions */}
+            {currentDocument && (
+              <div className={`bg-gray-800 rounded-lg p-6 border ${stage === 'analysis' ? 'border-red-600' : 'border-gray-700'}`}>
+                <div className="flex items-center space-x-3 mb-4">
+                  <h3 className="text-2xl font-bold text-white">
+                    🤖 Step 3: Deep AI Analysis
+                  </h3>
+                  <div className="px-2 py-1 bg-purple-600/20 rounded border border-purple-500/30">
+                    <span className="text-xs text-purple-300">Gemini AI</span>
+                  </div>
+                </div>
+                <p className="text-gray-300 mb-4">
+                  Select any text in the PDF viewer to unleash deep AI analysis across your {priorDocuments.length} document knowledge base using advanced semantic intelligence.
+                </p>
+                
+                {selectedText && (
+                  <div className="bg-gray-700 p-4 rounded-lg mb-4">
+                    <h4 className="font-bold text-white mb-2">Selected for AI Analysis:</h4>
+                    <p className="text-gray-300 text-sm bg-gray-600 p-2 rounded">
+                      "{selectedText.text.substring(0, 200)}{selectedText.text.length > 200 ? '...' : ''}"
+                    </p>
+                    <div className="flex items-center justify-between mt-2">
+                      <p className="text-xs text-gray-400">Page {selectedText.page}</p>
+                      <p className="text-xs text-purple-400">{selectedText.text.length} characters</p>
                     </div>
-                  )}
+                  </div>
+                )}
 
-                  {/* Combined Summary */}
-                  {isUploaded && combinedSummary && (
-                    <div className="mt-4 bg-gray-800 p-4 rounded-lg border border-gray-600">
-                      <h4 className="text-white font-medium mb-2">📝 Combined Summary</h4>
-                      <p className="text-gray-300 whitespace-pre-line">{combinedSummary}</p>
+                {analysisLoading && (
+                  <div className="bg-gradient-to-r from-purple-900/20 to-blue-900/20 p-4 rounded-lg border border-purple-500/30">
+                    <div className="flex items-center space-x-3 text-yellow-400 mb-2">
+                      <Loader />
+                      <div>
+                        <span className="font-medium">Deep AI Analysis in Progress...</span>
+                      </div>
                     </div>
-                  )}
-                </>
-              )}
-            </div>
-          )}
+                    <div className="space-y-1 text-sm text-purple-300">
+                      <div className="flex items-center space-x-2">
+                        <span>🧠</span>
+                        <span>Gemini AI analyzing across {priorDocuments.length} documents...</span>
+                      </div>
+                      {isDeepAiAnalysisLoading && (
+                        <div className="flex items-center space-x-2">
+                          <span>🔍</span>
+                          <span>Generating strategic insights and breakthrough connections...</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {analysisResults && (
+                  <div className="mt-4 p-4 bg-gradient-to-r from-green-900/20 to-emerald-900/20 border border-green-400 rounded-lg">
+                    <div className="flex items-center space-x-2 text-green-400 mb-2">
+                      <span className="text-xl">🎉</span>
+                      <span className="font-medium">Deep AI Analysis Complete!</span>
+                      <div className="px-2 py-1 bg-green-600/20 rounded border border-green-500/30">
+                        <span className="text-xs text-green-300">AI Enhanced</span>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                      <div className="text-center">
+                        <div className="text-lg font-bold text-purple-400">
+                          {analysisResults.relevant_snippets?.length || 0}
+                        </div>
+                        <div className="text-xs text-gray-400">Relevant Sections</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-lg font-bold text-blue-400">
+                          {analysisResults.metadata?.insight_categories || 0}
+                        </div>
+                        <div className="text-xs text-gray-400">AI Categories</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-lg font-bold text-green-400">
+                          {analysisResults.metadata?.total_insights || 0}
+                        </div>
+                        <div className="text-xs text-gray-400">Total Insights</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-lg font-bold text-yellow-400">
+                          {analysisResults.metadata?.high_relevance_snippets || 0}
+                        </div>
+                        <div className="text-xs text-gray-400">High Quality</div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* RIGHT COLUMN - PDF Viewer & Results */}
+          <div className="space-y-6">
+            {currentDocument && (
+              <div className="bg-gray-800 rounded-lg p-4 border border-gray-700">
+                <h3 className="text-xl font-bold text-white mb-4 flex items-center space-x-2">
+                  <span>Current Document Viewer</span>
+                  <div className="px-2 py-1 bg-blue-600/20 rounded border border-blue-500/30">
+                    <span className="text-xs text-blue-300">AI Ready</span>
+                  </div>
+                </h3>
+                <div className="min-h-[600px] bg-gray-900 rounded-lg">
+                  <AdobePdfViewer 
+                    ref={pdfViewerRef}
+                    pdfFile={currentDocument}
+                    onTextSelection={handleTextSelection}
+                  />
+                </div>
+              </div>
+            )}
+
+            {analysisResults && (
+              <DeepAiAnalysisResultsPanel 
+                results={analysisResults}
+                onSnippetClick={navigateToSnippet}
+                onGeneratePodcast={handleGeneratePodcast}
+                isPodcastGenerating={isPodcastGenerating}
+                podcastData={podcastData}
+                onTogglePodcast={togglePodcastPlayback}
+                isPodcastPlaying={isPodcastPlaying}
+                currentTime={currentTime}
+                duration={duration}
+              />
+            )}
+          </div>
         </div>
+
+        {/* ✅ Enhanced Audio Element */}
+        {podcastData && (
+          <audio
+            ref={audioRef}
+            preload="metadata"
+            onTimeUpdate={handleAudioTimeUpdate}
+            onLoadedMetadata={handleAudioLoadedMetadata}
+            onError={handleAudioError}
+            onEnded={() => setIsPodcastPlaying(false)}
+            onPlay={() => setIsPodcastPlaying(true)}
+            onPause={() => setIsPodcastPlaying(false)}
+          >
+            <source src={podcastData.audio_url} type="audio/mpeg" />
+            <source src={podcastData.audio_url} type="audio/mp3" />
+            Your browser does not support the audio element.
+          </audio>
+        )}
+
+        {loading && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-gray-800 p-6 rounded-lg text-center">
+              <Loader />
+              <p className="text-white mt-4">Processing with AI...</p>
+            </div>
+          </div>
+        )}
       </div>
     </section>
   );
 };
 
-export default UploadSection;
+// ✅ DEEP AI ANALYSIS RESULTS PANEL with Enhanced Gemini Insights
+const DeepAiAnalysisResultsPanel = ({ 
+  results, 
+  onSnippetClick, 
+  onGeneratePodcast, 
+  isPodcastGenerating, 
+  podcastData, 
+  onTogglePodcast, 
+  isPodcastPlaying,
+  currentTime = 0,
+  duration = 0
+}) => {
+  const [activeTab, setActiveTab] = useState('insights');
 
+  // Format time for display
+  const formatTime = (seconds) => {
+    if (!seconds || isNaN(seconds)) return '0:00';
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  return (
+    <div className="bg-gray-800 rounded-lg p-4 border border-gray-700">
+      <div className="flex items-center space-x-3 mb-4">
+        <h3 className="text-xl font-bold text-white">Deep AI Analysis Results</h3>
+        <div className="px-3 py-1 bg-gradient-to-r from-purple-600/20 to-blue-600/20 rounded-full border border-purple-500/30">
+          <span className="text-xs text-purple-300 font-medium">Powered by Gemini AI</span>
+        </div>
+        <div className="px-2 py-1 bg-green-600/20 rounded border border-green-500/30">
+          <span className="text-xs text-green-300">Deep Analysis</span>
+        </div>
+      </div>
+      
+      {/* Tab Navigation */}
+      <div className="flex space-x-2 mb-6">
+        {['insights', 'snippets', 'podcast'].map(tab => (
+          <button 
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            className={`px-4 py-2 rounded text-sm font-medium transition-colors ${
+              activeTab === tab 
+                ? 'bg-red-600 text-white' 
+                : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+            }`}
+          >
+            {tab === 'insights' && '🧠 AI Insights'}
+            {tab === 'snippets' && '📋 Connections'}
+            {tab === 'podcast' && '🎧 AI Podcast'}
+          </button>
+        ))}
+      </div>
+      
+      {/* ✅ DEEP GEMINI AI INSIGHTS TAB */}
+      {activeTab === 'insights' && (
+        <DeepGeminiInsightsDisplay insights={results.insights} />
+      )}
+      
+      {activeTab === 'snippets' && (
+        <div className="space-y-3">
+          <h4 className="font-bold text-white mb-3 flex items-center space-x-2">
+            <span>📋 Cross-Document Connections</span>
+            <span className="text-sm text-gray-400">({results.relevant_snippets?.length || 0})</span>
+            <div className="px-2 py-1 bg-blue-600/20 rounded border border-blue-500/30">
+              <span className="text-xs text-blue-300">AI Found</span>
+            </div>
+          </h4>
+          {results.relevant_snippets?.map((snippet, index) => (
+            <div 
+              key={index}
+              className="group p-3 bg-gray-700 border border-gray-600 rounded cursor-pointer hover:bg-gray-600 transition-colors"
+              onClick={() => onSnippetClick(snippet)}
+            >
+              <div className="flex justify-between items-start mb-2">
+                <div className="text-sm font-medium text-red-400 flex items-center space-x-2">
+                  <span>📄 {snippet.document_name}</span>
+                </div>
+                <div className="text-xs text-gray-400">
+                  Page {snippet.page} • {(snippet.similarity_score * 100).toFixed(0)}% match
+                </div>
+              </div>
+              <div className="text-gray-300 text-sm leading-relaxed">{snippet.section_text}</div>
+              <div className="flex items-center justify-between mt-3 pt-2 border-t border-gray-600/50">
+                <div className="text-xs text-blue-400 flex items-center space-x-1">
+                  <span>🔗</span>
+                  <span>Click to navigate</span>
+                </div>
+                <div className="text-xs text-gray-500">
+                  AI Relevance: {(snippet.similarity_score * 100).toFixed(1)}%
+                </div>
+              </div>
+            </div>
+          ))}
+          
+          {(!results.relevant_snippets || results.relevant_snippets.length === 0) && (
+            <div className="p-6 bg-gray-700/50 rounded-lg text-center">
+              <div className="text-4xl text-gray-500 mb-2">🤔</div>
+              <p className="text-gray-400">No cross-document connections found</p>
+              <p className="text-xs text-gray-500 mt-2">Try selecting different or longer text</p>
+            </div>
+          )}
+        </div>
+      )}
+      
+      {/* ✅ ENHANCED AI PODCAST TAB */}
+      {activeTab === 'podcast' && (
+        <div className="space-y-4">
+          <h4 className="font-bold text-white mb-4 flex items-center space-x-2">
+            <span>🎧 AI-Generated Podcast</span>
+            <div className="px-2 py-1 bg-purple-600/20 rounded border border-purple-500/30">
+              <span className="text-xs text-purple-300">Deep Analysis</span>
+            </div>
+          </h4>
+          
+          {!podcastData && !isPodcastGenerating && (
+            <div className="bg-gradient-to-br from-purple-900/30 to-blue-900/30 p-6 rounded-lg border border-purple-500/40">
+              <div className="text-center">
+                <div className="text-6xl mb-4">🎙️</div>
+                <h5 className="text-xl font-bold text-white mb-2">Create AI Podcast</h5>
+                <p className="text-gray-300 text-sm mb-6">
+                  Generate an engaging 2-speaker podcast discussion powered by deep Gemini AI insights from your cross-document analysis.
+                </p>
+                <Button 
+                  variant="primary" 
+                  size="lg"
+                  onClick={onGeneratePodcast}
+                  className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-medium"
+                >
+                  <span className="flex items-center space-x-2">
+                    <span>🤖</span>
+                    <span>Generate Deep AI Podcast</span>
+                  </span>
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {isPodcastGenerating && (
+            <div className="bg-gradient-to-br from-purple-900/30 to-blue-900/30 p-6 rounded-lg border border-purple-500/40">
+              <div className="text-center">
+                <div className="flex items-center justify-center space-x-3 mb-4">
+                  <Loader />
+                  <span className="text-white font-medium">Generating Deep AI Podcast...</span>
+                </div>
+                <div className="space-y-2 text-sm text-purple-300">
+                  <div className="flex items-center justify-center space-x-2">
+                    <span>🧠</span>
+                    <span>Processing Gemini AI insights...</span>
+                  </div>
+                  <div className="flex items-center justify-center space-x-2">
+                    <span>🎙️</span>
+                    <span>Creating intelligent 2-speaker discussion...</span>
+                  </div>
+                  <div className="flex items-center justify-center space-x-2">
+                    <span>🔊</span>
+                    <span>Generating professional audio...</span>
+                  </div>
+                </div>
+                <div className="mt-4 w-full bg-gray-700 rounded-full h-3">
+                  <div className="bg-gradient-to-r from-purple-500 to-blue-500 h-3 rounded-full animate-pulse w-3/4"></div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {podcastData && (
+            <div className="bg-gradient-to-br from-purple-900/30 to-blue-900/30 p-6 rounded-lg border border-purple-500/40">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h5 className="text-white font-bold mb-1 flex items-center space-x-2">
+                    <span>🎉 Deep AI Podcast Ready!</span>
+                  </h5>
+                  <div className="flex items-center space-x-2">
+                    <p className="text-gray-300 text-sm">
+                      Duration: {podcastData.duration || '~5 minutes'} • AI-Enhanced Discussion
+                    </p>
+                    <div className="px-2 py-1 bg-purple-600/20 rounded border border-purple-500/30">
+                      <span className="text-xs text-purple-300">Gemini Powered</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Button
+                    onClick={onTogglePodcast}
+                    className={`${isPodcastPlaying ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'} text-white font-medium`}
+                  >
+                    {isPodcastPlaying ? '⏸️ Pause' : '▶️ Play'}
+                  </Button>
+                </div>
+              </div>
+
+              {/* Enhanced Audio Progress Bar */}
+              {duration > 0 && (
+                <div className="mb-4">
+                  <div className="flex justify-between text-xs text-gray-400 mb-1">
+                    <span>{formatTime(currentTime)}</span>
+                    <span>{formatTime(duration)}</span>
+                  </div>
+                  <div className="w-full bg-gray-700 rounded-full h-2">
+                    <div 
+                      className="bg-gradient-to-r from-purple-500 to-blue-500 h-2 rounded-full transition-all duration-300"
+                      style={{ width: `${duration ? (currentTime / duration) * 100 : 0}%` }}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* AI-Enhanced Script Preview */}
+              {podcastData.script && (
+                <div className="bg-gray-800/50 p-4 rounded-lg mb-4">
+                  <h6 className="text-white font-medium mb-2 flex items-center space-x-2">
+                    <span>📜 AI-Generated Script Preview</span>
+                    <div className="px-2 py-1 bg-blue-600/20 rounded border border-blue-500/30">
+                      <span className="text-xs text-blue-300">Intelligent</span>
+                    </div>
+                  </h6>
+                  <div className="text-gray-300 text-sm max-h-32 overflow-y-auto space-y-2">
+                    {podcastData.script.split('\n').slice(0, 8).map((line, idx) => (
+                      <p key={idx} className="leading-relaxed">
+                        {line.trim().startsWith('Speaker') ? (
+                          <span className="text-purple-400 font-medium">{line}</span>
+                        ) : (
+                          <span>{line}</span>
+                        )}
+                      </p>
+                    ))}
+                    <p className="text-gray-500 italic">...continue listening for complete AI analysis</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Enhanced Podcast Controls */}
+              <div className="flex items-center justify-between">
+                <div className="text-xs text-gray-400">
+                  {isPodcastPlaying ? (
+                    <span className="flex items-center space-x-2">
+                      <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                      <span>🎧 Now Playing AI Podcast...</span>
+                    </span>
+                  ) : (
+                    <span className="flex items-center space-x-2">
+                      <span>🤖</span>
+                      <span>Deep AI podcast ready to play</span>
+                    </span>
+                  )}
+                </div>
+                <div className="flex items-center space-x-3">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      if (podcastData.audio_url) {
+                        const link = document.createElement('a');
+                        link.href = podcastData.audio_url;
+                        link.download = `deep-ai-podcast-${Date.now()}.mp3`;
+                        link.click();
+                        toast('🎧 AI Podcast download started!');
+                      }
+                    }}
+                    className="text-gray-300 hover:text-white text-xs"
+                  >
+                    📥 Download
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      if (navigator.share) {
+                        navigator.share({
+                          title: 'Deep AI Generated Podcast',
+                          text: 'Check out this AI-powered podcast with deep document insights',
+                          url: podcastData.audio_url
+                        });
+                      } else {
+                        navigator.clipboard.writeText(podcastData.audio_url);
+                        toast('🔗 Podcast link copied!');
+                      }
+                    }}
+                    className="text-gray-300 hover:text-white text-xs"
+                  >
+                    🔗 Share
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ✅ DEEP GEMINI AI INSIGHTS COMPONENT
+const DeepGeminiInsightsDisplay = ({ insights }) => {
+  const [activeInsight, setActiveInsight] = useState('deep_similarities');
+  const [isExpanded, setIsExpanded] = useState(false);
+  
+  const insightCategories = [
+    { key: 'deep_similarities', title: '🔗 Deep Similarities', icon: '🔗', color: 'blue', description: 'Advanced conceptual alignments' },
+    { key: 'strategic_contradictions', title: '⚡ Strategic Conflicts', icon: '⚡', color: 'red', description: 'Fundamental disagreements' },
+    { key: 'breakthrough_connections', title: '🚀 Breakthrough Links', icon: '🚀', color: 'green', description: 'Revolutionary insights' },
+    { key: 'strategic_insights', title: '💡 Strategic Intelligence', icon: '💡', color: 'yellow', description: 'Actionable recommendations' },
+    { key: 'evolutionary_variations', title: '🔄 Evolution Patterns', icon: '🔄', color: 'purple', description: 'How concepts evolved' },
+    { key: 'powerful_examples', title: '📋 Compelling Evidence', icon: '📋', color: 'indigo', description: 'Strong supporting cases' },
+    { key: 'knowledge_synthesis', title: '🧠 Meta-Analysis', icon: '🧠', color: 'pink', description: 'Higher-order insights' },
+    { key: 'critical_limitations', title: '⚠️ Critical Constraints', icon: '⚠️', color: 'orange', description: 'Important limitations' }
+  ];
+
+  const getInsightQuality = (insights) => {
+    const totalInsights = Object.values(insights).flat().length;
+    const avgLength = Object.values(insights).flat().reduce((acc, insight) => acc + insight.length, 0) / totalInsights;
+    
+    if (totalInsights > 15 && avgLength > 100) return { level: 'Exceptional', color: 'green', icon: '🏆' };
+    if (totalInsights > 10 && avgLength > 80) return { level: 'Advanced', color: 'blue', icon: '🎯' };
+    if (totalInsights > 5 && avgLength > 60) return { level: 'Good', color: 'yellow', icon: '👍' };
+    return { level: 'Basic', color: 'orange', icon: '📊' };
+  };
+
+  const quality = getInsightQuality(insights);
+
+  return (
+    <div className="bg-gradient-to-br from-purple-900/30 to-blue-900/30 p-6 rounded-xl border border-purple-500/40">
+      {/* Enhanced Header */}
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center space-x-3">
+          <div className="p-3 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full animate-pulse">
+            <span className="text-2xl">🤖</span>
+          </div>
+          <div>
+            <h4 className="text-xl font-bold text-white">Deep Gemini AI Analysis</h4>
+            <div className="flex items-center space-x-2">
+              <p className="text-gray-300 text-sm">Revolutionary document intelligence</p>
+              <div className={`px-2 py-1 bg-${quality.color}-600/20 rounded border border-${quality.color}-500/30`}>
+                <span className="text-xs font-medium">{quality.icon} {quality.level}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <button
+          onClick={() => setIsExpanded(!isExpanded)}
+          className="p-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors"
+        >
+          <span className="text-white text-sm">{isExpanded ? '📖 Compact' : '🔍 Expand'}</span>
+        </button>
+      </div>
+
+      {/* AI Analytics Dashboard */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6 p-4 bg-gray-800/30 rounded-lg">
+        <div className="text-center">
+          <div className="text-2xl font-bold text-purple-400">
+            {Object.values(insights).flat().length}
+          </div>
+          <div className="text-xs text-gray-400">AI Insights</div>
+        </div>
+        <div className="text-center">
+          <div className="text-2xl font-bold text-blue-400">
+            {Object.keys(insights).filter(k => insights[k]?.length > 0).length}
+          </div>
+          <div className="text-xs text-gray-400">Categories</div>
+        </div>
+        <div className="text-center">
+          <div className="text-2xl font-bold text-green-400">
+            {Math.round(Object.values(insights).flat().reduce((acc, insight) => acc + insight.length, 0) / Object.values(insights).flat().length) || 0}
+          </div>
+          <div className="text-xs text-gray-400">Avg Depth</div>
+        </div>
+        <div className="text-center">
+          <div className="text-2xl font-bold text-yellow-400">AI</div>
+          <div className="text-xs text-gray-400">Generated</div>
+        </div>
+      </div>
+
+      {/* Enhanced Category Tabs */}
+      <div className="flex flex-wrap gap-2 mb-6">
+        {insightCategories.map(({ key, title, icon, color, description }) => {
+          const count = insights[key]?.length || 0;
+          return (
+            <button
+              key={key}
+              onClick={() => setActiveInsight(key)}
+              className={`relative px-3 py-2 rounded-full text-sm font-medium transition-all group ${
+                activeInsight === key
+                  ? `bg-${color}-600 text-white shadow-lg scale-105`
+                  : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+              }`}
+              title={description}
+            >
+              <span className="mr-1">{icon}</span>
+              {title.split(' ').pop()}
+              {count > 0 && (
+                <div className={`absolute -top-2 -right-2 w-5 h-5 bg-${color}-500 text-xs rounded-full flex items-center justify-center text-white`}>
+                  {count}
+                </div>
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Enhanced Active Insight Content */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h5 className="text-lg font-semibold text-white flex items-center space-x-2">
+            <span>{insightCategories.find(cat => cat.key === activeInsight)?.icon}</span>
+            <span>{insightCategories.find(cat => cat.key === activeInsight)?.title}</span>
+            <span className="text-sm text-gray-400">({insights[activeInsight]?.length || 0})</span>
+          </h5>
+          <div className="text-xs text-gray-400">
+            {insightCategories.find(cat => cat.key === activeInsight)?.description}
+          </div>
+        </div>
+        
+        <div className="space-y-4">
+          {insights[activeInsight]?.length > 0 ? (
+            insights[activeInsight].map((insight, idx) => (
+              <div 
+                key={idx}
+                className="group relative p-5 bg-gray-800/60 rounded-lg border border-gray-600/50 hover:border-gray-500/50 transition-all hover:bg-gray-800/80"
+              >
+                <div className="flex items-start space-x-3">
+                  <div className="flex-shrink-0 w-8 h-8 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full flex items-center justify-center text-white text-sm font-bold">
+                    {idx + 1}
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-gray-200 leading-relaxed">{insight}</p>
+                    
+                    {/* Enhanced insight metadata */}
+                    <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-700/50">
+                      <div className="flex items-center space-x-2 text-xs text-gray-400">
+                        <span>🧠 {insight.length} chars</span>
+                        <span>•</span>
+                        <span>🤖 AI Generated</span>
+                        {insight.includes('Page') && (
+                          <>
+                            <span>•</span>
+                            <span>📄 With Reference</span>
+                          </>
+                        )}
+                      </div>
+                      <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button className="text-xs text-purple-400 hover:text-purple-300">
+                          💡 Expand Analysis
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="p-6 bg-gray-800/30 rounded-lg border border-gray-600/30 text-center">
+              <div className="text-4xl text-gray-500 mb-2">🤔</div>
+              <p className="text-gray-400 italic">No {activeInsight.replace('_', ' ')} found in current analysis</p>
+              <p className="text-xs text-gray-500 mt-2">Try selecting more or different text for richer AI insights</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Enhanced Powered by Badge */}
+      <div className="mt-6 pt-4 border-t border-gray-700/50">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <div className="px-3 py-1 bg-gradient-to-r from-blue-600/20 to-purple-600/20 rounded-full border border-blue-500/30">
+              <span className="text-xs text-blue-300 font-medium">Powered by Google Gemini 1.5 Pro</span>
+            </div>
+            <div className="px-2 py-1 bg-green-600/20 rounded border border-green-500/30">
+              <span className="text-xs text-green-300">Real-time AI</span>
+            </div>
+          </div>
+          <div className="text-xs text-gray-500">
+            Deep analysis generated in real-time
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default UploadSection;
