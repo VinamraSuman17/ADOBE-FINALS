@@ -3,8 +3,11 @@ from app.models.outline_extractor import ProperPDFExtractor
 from app.models.persona_analyzer import analyze_with_persona
 from app.models.section_highlighter import SectionHighlighter
 import json
+from uuid import uuid4
+from pathlib import Path
+from datetime import datetime
 import hashlib
-import uuid
+
 import os
 from typing import List
 from datetime import datetime
@@ -42,14 +45,28 @@ router = APIRouter()
 SESSION_STORAGE = {}
 
 def store_session_data(session_id: str, data: dict):
-    """Store session data in memory"""
+    """Store session data in memory with enhanced logging"""
     SESSION_STORAGE[session_id] = data
-    print(f"📝 Stored session data for {session_id}: {len(data.get('prior_documents', []))} prior docs")
+    print(f"📝 ✅ STORED session data for {session_id}")
+    print(f"📊 Prior docs count: {len(data.get('prior_documents', []))}")
+    print(f"📂 Total sessions now: {len(SESSION_STORAGE)}")
+    
+    # Log sample document IDs for debugging
+    prior_docs = data.get('prior_documents', [])
+    if prior_docs:
+        sample_ids = [doc.get('unique_id', 'NO_ID') for doc in prior_docs[:3]]
+        print(f"📋 Sample document IDs: {sample_ids}")
 
 def get_session_data(session_id: str) -> dict:
-    """Retrieve session data from memory"""
+    """Retrieve session data from memory with enhanced logging"""
     data = SESSION_STORAGE.get(session_id, {})
-    print(f"📖 Retrieved session data for {session_id}: {len(data.get('prior_documents', []))} prior docs")
+    print(f"📖 ✅ RETRIEVED session data for {session_id}")
+    print(f"📊 Prior docs found: {len(data.get('prior_documents', []))}")
+    
+    if data.get('prior_documents'):
+        sample_ids = [doc.get('unique_id', 'NO_ID') for doc in data.get('prior_documents', [])[:3]]
+        print(f"📋 Available document IDs: {sample_ids}")
+    
     return data
 
 def calculate_similarity(text1: str, text2: str) -> float:
@@ -558,94 +575,132 @@ def create_enhanced_mp3(file_path: Path, script: str):
 
 # Adobe Challenge Endpoints
 
+# ✅ FIXED INGEST-PRIOR-DOCUMENTS FUNCTION
 @router.post("/ingest-prior-documents/")
 async def ingest_prior_documents(
     files: List[UploadFile],
     user_session_id: str = Form(...)
 ):
     """
-    Adobe Step 1: Upload and index 20-30 prior documents
+    Adobe Step 1: Upload and index 20-30 prior documents with unique IDs
     These form the knowledge base for finding connections
     """
     try:
         if not files:
             raise HTTPException(status_code=400, detail="No files provided")
-        
         if len(files) > 50:
             raise HTTPException(status_code=400, detail="Maximum 50 files allowed")
-        
+
         print(f"📚 Processing {len(files)} prior documents for session {user_session_id}")
-        
+
         session_data = {
             "session_id": user_session_id,
             "prior_documents": [],
             "created_at": datetime.utcnow().isoformat(),
             "total_sections": 0
         }
-        
+
         extractor = ProperPDFExtractor()
         processed_count = 0
-        
+
+        # ✅ Create unique storage directory for PDFs
+        pdf_storage_dir = Path("storage/pdfs")
+        pdf_storage_dir.mkdir(parents=True, exist_ok=True)
+
         for idx, file in enumerate(files):
             if not file.filename.endswith('.pdf'):
                 print(f"⚠️ Skipping non-PDF file: {file.filename}")
                 continue
-                
+
             try:
                 print(f"📄 Processing file {idx + 1}/{len(files)}: {file.filename}")
-                
+
                 # Read file content
                 content = await file.read()
                 file_hash = hashlib.sha256(content).hexdigest()
-                
+
+                # ✅ Generate unique PDF ID - FIXED!
+                unique_pdf_id = str(uuid4())
+                print(f"🆔 Generated unique ID: {unique_pdf_id}")
+
                 # Extract document structure
                 outline = extractor.extract_outline(content)
-                
+
+                # ✅ Store PDF with unique filename - FIXED!
+                unique_filename = f"{unique_pdf_id}.pdf"
+                pdf_file_path = pdf_storage_dir / unique_filename
+
+                # Save PDF file with unique name
+                with open(pdf_file_path, 'wb') as f:
+                    f.write(content)
+
+                print(f"💾 Saved PDF: {pdf_file_path}")
+
                 # Create document embeddings for semantic search
                 doc_embeddings = create_document_embeddings(content, outline)
-                
-                # Store document data
+
+                # ✅ Store enhanced document data with unique ID - FIXED!
                 doc_data = {
-                    "id": f"prior_{idx}_{file_hash[:8]}",
-                    "filename": file.filename,
+                    "unique_id": unique_pdf_id,  # ✅ FIXED: Proper UUID
+                    "original_filename": file.filename,  # ✅ FIXED: Original name
+                    "stored_filename": unique_filename,  # ✅ FIXED: Stored name
+                    "file_path": str(pdf_file_path),  # ✅ FIXED: Full file path
+                    "access_url": f"/files/{unique_filename}",  # ✅ FIXED: Access URL
                     "file_hash": file_hash,
                     "upload_timestamp": datetime.utcnow().isoformat(),
                     "content_size": len(content),
                     "outline": outline,
                     "embeddings": doc_embeddings,
                     "total_sections": len(outline.get("outline", [])),
-                    "file_content": content  # Store for potential full-text search
+                    "metadata": {
+                        "pages_count": len(outline.get("outline", [])),
+                        "upload_index": idx,
+                        "session_id": user_session_id
+                    }
                 }
-                
+
                 session_data["prior_documents"].append(doc_data)
                 session_data["total_sections"] += doc_data["total_sections"]
                 processed_count += 1
-                
-                print(f"✅ Processed {file.filename}: {doc_data['total_sections']} sections")
-                
+
+                print(f"✅ Processed {file.filename} -> ID: {unique_pdf_id}")
+
             except Exception as e:
                 print(f"❌ Failed to process {file.filename}: {e}")
                 # Continue processing other files
                 continue
-        
+
         if processed_count == 0:
             raise HTTPException(status_code=400, detail="No valid PDF files were processed")
-        
-        # Store session data
+
+        # ✅ Store session data - FIXED!
         store_session_data(user_session_id, session_data)
         
+        print(f"✅ Session data stored successfully for {user_session_id}")
+
         return {
             "success": True,
             "documents_processed": processed_count,
             "total_files_uploaded": len(files),
             "total_sections_indexed": session_data["total_sections"],
+            "documents_with_ids": [
+                {
+                    "id": doc["unique_id"],
+                    "filename": doc["original_filename"],
+                    "pages": doc["total_sections"]
+                }
+                for doc in session_data["prior_documents"]
+            ],
             "session_id": user_session_id,
-            "message": f"Successfully indexed {processed_count} prior documents with {session_data['total_sections']} total sections"
+            "message": f"Successfully indexed {processed_count} prior documents with unique IDs"
         }
-        
+
     except Exception as e:
         print(f"❌ Prior documents ingestion failed: {str(e)}")
+        import traceback
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Ingestion failed: {str(e)}")
+
 
 @router.post("/set-current-document/")
 async def set_current_document(
@@ -809,61 +864,59 @@ def retrieve_from_prior_documents(selection_text: str, prior_docs: List[dict], t
     Adobe's core requirement: DON'T search in current document
     """
     relevant_snippets = []
-    
     print(f"🔍 Searching for: '{selection_text[:50]}...'")
-    
+
     try:
         for doc_idx, doc in enumerate(prior_docs):
-            doc_filename = doc.get("filename", f"Document_{doc_idx}")
+            # ✅ CRITICAL FIX: Use correct field names
+            doc_filename = doc.get("original_filename", f"Document_{doc_idx}")
+            doc_unique_id = doc.get("unique_id", f"doc_{doc_idx}")  # ✅ Use unique_id
             outline = doc.get("outline", {})
-            
+
             # Search through document sections
             for section_idx, section in enumerate(outline.get("outline", [])):
                 section_text = section.get("text", "")
-                
                 if not section_text.strip():
                     continue
-                
+
                 # Calculate relevance score
                 similarity_score = calculate_similarity(selection_text.lower(), section_text.lower())
-                
-                # Also check for keyword overlap
                 selection_words = set(selection_text.lower().split())
                 section_words = set(section_text.lower().split())
                 keyword_overlap = len(selection_words.intersection(section_words)) / max(len(selection_words), 1)
-                
-                # Combined relevance score
                 combined_score = (similarity_score * 0.7) + (keyword_overlap * 0.3)
-                
-                if combined_score > 0.1:  # Relevance threshold
+
+                if combined_score > 0.1:
                     snippet = {
                         "document_name": doc_filename,
-                        "document_id": doc.get("id", f"doc_{doc_idx}"),
+                        "document_id": doc_unique_id,    # ✅ CRITICAL: Use unique_id
+                        "unique_id": doc_unique_id,      # ✅ CRITICAL: For PDF preview
                         "section_text": section_text,
                         "page": section.get("page", 1),
                         "section_level": section.get("level", 1),
                         "similarity_score": combined_score,
                         "keyword_overlap": keyword_overlap,
-                        "deep_link": f"doc_{doc.get('id', doc_idx)}_page_{section.get('page', 1)}",
+                        "deep_link": f"doc_{doc_unique_id}_page_{section.get('page', 1)}",
                         "snippet_length": len(section_text),
                         "section_index": section_idx
                     }
-                    
                     relevant_snippets.append(snippet)
-        
+
         # Sort by relevance score (descending)
         relevant_snippets.sort(key=lambda x: x["similarity_score"], reverse=True)
-        
-        # Return top K results
         top_snippets = relevant_snippets[:top_k]
         
-        print("📊 Relevance scores:", [f"{s['similarity_score']:.3f}" for s in top_snippets[:5]])
+        # ✅ DEBUG LOG  
+        print(f"📊 Found {len(top_snippets)} snippets with unique IDs:")
+        for s in top_snippets[:3]:
+            print(f"  - {s['document_name']} (ID: {s['unique_id']}) - {s['similarity_score']:.3f}")
 
         return top_snippets
-        
+
     except Exception as e:
         print(f"❌ Retrieval error: {e}")
         return []
+
 
 # ✅ ENHANCED PODCAST GENERATION
 @router.post("/generate-podcast/")
@@ -1187,3 +1240,95 @@ async def get_session_podcasts(session_id: str):
         "ai_enhanced": True,
         "deep_analysis": True
     }
+
+
+# Add this route to your routes.py if not already present
+@router.get("/files/{filename}")
+async def serve_pdf_file(filename: str):
+    """Serve stored PDF files for preview"""
+    from fastapi.responses import FileResponse
+    
+    pdf_path = Path("storage/pdfs") / filename
+    
+    if pdf_path.exists():
+        return FileResponse(
+            path=str(pdf_path),
+            media_type="application/pdf",
+            filename=filename,
+            headers={
+                "Content-Type": "application/pdf",
+                "Content-Disposition": "inline"  # For preview, not download
+            }
+        )
+    else:
+        raise HTTPException(status_code=404, detail="PDF file not found")
+    
+    # ✅ ADD THIS DEBUG ENDPOINT TO ROUTES.PY
+@router.get("/debug/sessions")
+async def debug_all_sessions():
+    """Debug endpoint to check all session data"""
+    debug_info = []
+    
+    for session_id, session_data in SESSION_STORAGE.items():
+        prior_docs = session_data.get("prior_documents", [])
+        docs_info = []
+        
+        for doc in prior_docs[:3]:  # Show first 3 docs
+            docs_info.append({
+                "unique_id": doc.get("unique_id"),
+                "original_filename": doc.get("original_filename"),
+                "stored_filename": doc.get("stored_filename"),
+                "file_exists": Path(doc.get("file_path", "")).exists() if doc.get("file_path") else False
+            })
+            
+        debug_info.append({
+            "session_id": session_id,
+            "total_prior_docs": len(prior_docs),
+            "sample_docs": docs_info
+        })
+    
+    return {"sessions": debug_info, "total_sessions": len(SESSION_STORAGE)}
+
+# ✅ FIXED PDF-METADATA ENDPOINT
+@router.get("/pdf-metadata/{pdf_id}")
+async def get_pdf_metadata(pdf_id: str):
+    """Get PDF metadata and access URL by unique ID"""
+    try:
+        print(f"🔍 Searching for PDF with ID: {pdf_id}")
+        print(f"📊 Total sessions: {len(SESSION_STORAGE)}")
+        
+        # Search across all sessions for this PDF ID
+        for session_id, session_data in SESSION_STORAGE.items():
+            prior_docs = session_data.get("prior_documents", [])
+            print(f"📂 Session {session_id}: {len(prior_docs)} prior docs")
+            
+            for idx, doc in enumerate(prior_docs):
+                doc_unique_id = doc.get("unique_id")
+                print(f"  Doc {idx}: ID={doc_unique_id}, filename={doc.get('original_filename')}")
+                
+                if doc_unique_id == pdf_id:
+                    print(f"✅ Found PDF: {doc['original_filename']}")
+                    return {
+                        "success": True,
+                        "pdf_data": {
+                            "id": doc["unique_id"],
+                            "filename": doc["original_filename"],
+                            "file_url": f"http://localhost:8080/files/{doc['stored_filename']}",
+                            "file_path": doc.get("file_path"),
+                            "pages_count": doc.get("total_sections", 0),
+                            "upload_timestamp": doc.get("upload_timestamp"),
+                            "total_sections": doc.get("total_sections", 0)
+                        }
+                    }
+        
+        print(f"❌ PDF not found: {pdf_id}")
+        print("💡 Available IDs:", [doc.get("unique_id") for session in SESSION_STORAGE.values() for doc in session.get("prior_documents", [])])
+        
+        raise HTTPException(status_code=404, detail=f"PDF not found: {pdf_id}")
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"❌ Error retrieving PDF metadata: {e}")
+        raise HTTPException(status_code=500, detail=f"Error retrieving PDF metadata: {str(e)}")
+

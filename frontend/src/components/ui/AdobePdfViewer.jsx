@@ -71,86 +71,83 @@ const AdobePdfViewer = forwardRef(({ pdfFile, onTextSelection, isUploaded = fals
   }, [isSDKReady, pdfFile, onTextSelection]);
 
   const initializePdfViewer = async () => {
-    try {
-      setIsLoading(true);
-      setError(null);
-      retryCountRef.current += 1;
+  try {
+    setIsLoading(true);
+    setError(null);
+    retryCountRef.current += 1;
 
-      console.log(`🔍 Initialization attempt ${retryCountRef.current}/${maxRetries}`);
+    console.log(`🔍 Initialization attempt ${retryCountRef.current}/${maxRetries}`);
 
-      // ✅ Double-check Adobe SDK is available
-      if (!window.AdobeDC || !window.AdobeDC.View) {
-        throw new Error('Adobe SDK not loaded');
-      }
+    // ✅ Check SDK loaded
+    if (!window.AdobeDC || !window.AdobeDC.View) {
+      throw new Error("Adobe SDK not loaded");
+    }
 
-      // ✅ Wait for DOM element to exist
-      const waitForElement = new Promise((resolve, reject) => {
-        let attempts = 0;
-        const maxAttempts = 50;
-        
-        const checkElement = () => {
-          attempts++;
-          const element = document.getElementById('adobe-dc-view');
-          
-          console.log(`🔍 Attempt ${attempts}: Looking for #adobe-dc-view element...`);
-          
-          if (element) {
-            console.log('✅ Found #adobe-dc-view element:', element);
-            resolve(element);
-          } else if (attempts >= maxAttempts) {
-            console.log('❌ Element not found after maximum attempts');
-            reject(new Error('Element #adobe-dc-view not found'));
-          } else {
-            setTimeout(checkElement, 100);
-          }
-        };
-        
-        checkElement();
-      });
+    // ✅ Wait for target element
+    const viewerElement = await new Promise((resolve, reject) => {
+      let attempts = 0;
+      const maxAttempts = 50;
+      const checkElement = () => {
+        attempts++;
+        const el = document.getElementById("adobe-dc-view");
+        if (el) return resolve(el);
+        if (attempts >= maxAttempts) return reject(new Error("#adobe-dc-view not found"));
+        setTimeout(checkElement, 100);
+      };
+      checkElement();
+    });
 
-      const viewerElement = await waitForElement;
+    viewerElement.innerHTML = "";
+    console.log("🧹 Cleared previous viewer content");
 
-      // Clear any previous content
-      viewerElement.innerHTML = '';
-      console.log('🧹 Cleared previous viewer content');
+    // ✅ Init Adobe View
+    const adobeDCView = new window.AdobeDC.View({
+      clientId: import.meta.env.VITE_ADOBE_API_KEY || "demo-client-id",
+      divId: "adobe-dc-view"
+    });
 
-      console.log('🎯 Initializing Adobe DC View...');
+    // ✅ Register profile callback
+    adobeDCView.registerCallback(
+      window.AdobeDC.View.Enum.CallbackType.GET_USER_PROFILE_API,
+      () => Promise.resolve({
+        userProfile: { name: "Adobe Challenge User", email: "user@adobe-challenge.com" }
+      })
+    );
 
-      // Initialize Adobe DC View
-      const adobeDCView = new window.AdobeDC.View({
-        clientId: import.meta.env.VITE_ADOBE_API_KEY || 'demo-client-id',
-        divId: 'adobe-dc-view'
-      });
-
-      // 🎯 CRITICAL: Register user profile callback (required)
-      adobeDCView.registerCallback(
-        window.AdobeDC.View.Enum.CallbackType.GET_USER_PROFILE_API,
-        () => {
-          return new Promise(resolve => {
-            resolve({
-              userProfile: {
-                name: "Adobe Challenge User",
-                email: "user@adobe-challenge.com"
-              }
-            });
-          });
+    let contentConfig;
+    if (typeof pdfFile === "string") {
+      // 📌 Deep link case
+      console.log("🌐 Using PDF URL:", pdfFile);
+      contentConfig = {
+        location: {
+          url: pdfFile
+          // headers: [{ key: "Authorization", value: "Bearer token" }] // if needed
         }
-      );
-
-      console.log('📄 Converting file to ArrayBuffer...');
+      };
+    } else if (pdfFile instanceof File) {
+      // 📌 File object case
+      console.log("📄 Converting file to ArrayBuffer...");
       const arrayBuffer = await pdfFile.arrayBuffer();
       console.log(`✅ File converted: ${arrayBuffer.byteLength} bytes`);
+      contentConfig = {
+        promise: Promise.resolve(new Uint8Array(arrayBuffer)),
+        mimeType: "application/pdf"
+      };
+    } else {
+      throw new Error("Invalid pdfFile type");
+    }
 
-      // Preview file
-      console.log('🚀 Calling previewFile...');
-      const previewFilePromise = adobeDCView.previewFile({
-        content: { promise: Promise.resolve(arrayBuffer) },
-        metaData: { 
-          fileName: pdfFile.name,
+    // ✅ Preview file
+    const previewFilePromise = adobeDCView.previewFile(
+      {
+        content: contentConfig,
+        metaData: {
+          fileName: typeof pdfFile === "string" ? "document.pdf" : pdfFile.name,
           id: `pdf-${Date.now()}`
         }
-      }, {
-        embedMode: 'IN_LINE',
+      },
+      {
+        embedMode: "IN_LINE",
         showDownloadPDF: false,
         showPrintPDF: false,
         showLeftHandPanel: true,
@@ -159,90 +156,56 @@ const AdobePdfViewer = forwardRef(({ pdfFile, onTextSelection, isUploaded = fals
         showZoomControl: true,
         enableFormFilling: false,
         showBookmarks: true,
-        enableTextSelection: true // ✅ Explicitly enable text selection
-      });
+        enableTextSelection: true
+      }
+    );
 
-      // 🎯 CRITICAL: Register text selection callback AFTER previewFile
-      previewFilePromise.then(adobeViewer => {
-        console.log('📝 Registering text selection callback...');
-        console.log('📝 onTextSelection prop available:', typeof onTextSelection);
-        
-        // Register for PREVIEW_SELECTION_END event (most reliable)
+    previewFilePromise
+      .then((adobeViewer) => {
+        console.log("✅ PDF rendered successfully!");
+        // Register selection listener
         adobeDCView.registerCallback(
           window.AdobeDC.View.Enum.CallbackType.EVENT_LISTENER,
           async (event) => {
-            console.log('📝 Event received:', event.type, event);
-            
-            if (event.type === 'PREVIEW_SELECTION_END') {
-              try {
-                console.log('🎯 Text selection event detected!');
-                
-                // Get selected content from Adobe API
-                const apis = await adobeViewer.getAPIs();
-                const selectedContent = await apis.getSelectedContent();
-                
-                console.log('📝 Selected content:', selectedContent);
-                
-                if (selectedContent && selectedContent.data && selectedContent.data.length > 0) {
-                  const selectionData = {
-                    text: selectedContent.data,
-                    page: event.data?.pageNumber || 1,
-                    coordinates: event.data?.coordinates || null,
-                    timestamp: Date.now()
-                  };
-                  
-                  console.log('✅ Successfully captured text selection:', selectionData);
-                  
-                  // Show visual feedback
-                  showSelectionFeedback(selectionData.text.substring(0, 100));
-                  
-                  // 🎯 CRITICAL: Trigger parent callback for Adobe Challenge
-                  if (onTextSelection && typeof onTextSelection === 'function') {
-                    console.log('📤 Calling onTextSelection callback...');
-                    onTextSelection(selectionData);
-                  } else {
-                    console.warn('⚠️ onTextSelection callback not provided or not a function:', onTextSelection);
-                  }
-                  
-                } else {
-                  console.warn('⚠️ No text data in selection');
-                }
-              } catch (error) {
-                console.error('❌ Error processing text selection:', error);
+            if (event.type === "PREVIEW_SELECTION_END") {
+              const apis = await adobeViewer.getAPIs();
+              const selectedContent = await apis.getSelectedContent();
+              if (selectedContent?.data?.length > 0) {
+                const selectionData = {
+                  text: selectedContent.data,
+                  page: event.data?.pageNumber || 1,
+                  coordinates: event.data?.coordinates || null,
+                  timestamp: Date.now()
+                };
+                showSelectionFeedback(selectionData.text.substring(0, 100));
+                onTextSelection?.(selectionData);
               }
             }
           },
-          {
-            listenOn: ['PREVIEW_SELECTION_END'],
-            enableFilePreviewEvents: true
-          }
+          { listenOn: ["PREVIEW_SELECTION_END"], enableFilePreviewEvents: true }
         );
-
-        console.log('✅ Text selection callback registered successfully');
+        console.log("✅ Text selection callback registered");
+      })
+      .catch((err) => {
+        console.error("❌ PDF render failed:", err);
       });
 
-      setAdobeView(adobeDCView);
-      viewerRef.current = adobeDCView;
-      retryCountRef.current = 0; // Reset on success
+    setAdobeView(adobeDCView);
+    retryCountRef.current = 0;
+    setIsLoading(false);
+  } catch (err) {
+    console.error("❌ Adobe PDF Viewer Error:", err);
+    if (retryCountRef.current < maxRetries) {
+      console.log(`🔄 Retrying in ${retryCountRef.current} seconds...`);
+      setTimeout(initializePdfViewer, 1000 * retryCountRef.current);
+    } else {
+      setError(`Failed after ${maxRetries} attempts: ${err.message}`);
       setIsLoading(false);
-      console.log('✅ Adobe PDF Viewer initialized successfully with text selection!');
-
-    } catch (err) {
-      console.error('❌ Adobe PDF Viewer Error:', err);
-      
-      // ✅ Retry logic
-      if (retryCountRef.current < maxRetries) {
-        console.log(`🔄 Retrying in ${retryCountRef.current} seconds... (${retryCountRef.current}/${maxRetries})`);
-        setTimeout(() => {
-          initializePdfViewer();
-        }, 1000 * retryCountRef.current);
-      } else {
-        setError(`Failed after ${maxRetries} attempts: ${err.message}`);
-        setIsLoading(false);
-        retryCountRef.current = 0;
-      }
+      retryCountRef.current = 0;
     }
-  };
+  }
+};
+
 
   const showSelectionFeedback = (selectedText) => {
     // Create temporary notification
@@ -285,7 +248,7 @@ const AdobePdfViewer = forwardRef(({ pdfFile, onTextSelection, isUploaded = fals
         <svg className="w-5 h-5 mr-2 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
         </svg>
-        Adobe PDF Preview - Text Selection Ready
+        Adobe PDF Preview
         {isUploaded && <span className="ml-2 px-2 py-1 bg-green-600 text-xs rounded">Uploaded</span>}
         {!isSDKReady && <span className="ml-2 px-2 py-1 bg-orange-600 text-xs rounded">SDK Loading</span>}
       </h3>
@@ -321,21 +284,12 @@ const AdobePdfViewer = forwardRef(({ pdfFile, onTextSelection, isUploaded = fals
             </div>
           )}
 
-          {/* Instructions overlay */}
-          <div className="absolute top-4 right-4 bg-black bg-opacity-75 text-white p-3 rounded max-w-xs z-20">
-            <div className="text-sm">
-              <strong>💡 Adobe Challenge:</strong>
-              <br />Select any text in the PDF to find relevant connections from your prior documents.
-              <br />
-              <span className="text-green-400">✅ Text Selection Active</span>
-            </div>
-          </div>
 
           {/* ✅ Adobe DC View Container - Always present */}
           <div className="relative overflow-y-scroll h-[700px]">
             <div 
               id="adobe-dc-view" 
-              className="border border-gray-600 rounded-lg h-96 overflow-hidden bg-white"
+              className="border border-gray-600 rounded-lg h-96 bg-white"
               style={{ 
                 minHeight: '400px', 
                 width: '100%',
