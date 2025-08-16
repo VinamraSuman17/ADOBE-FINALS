@@ -1112,12 +1112,12 @@ const DeepAiAnalysisResultsPanel = ({
                   </Button>
                 </div>
               </div>
-
+              <div>{`${podcastData.audio_url}`}</div>
               <PodcastMode
-                analysis={podcastData.message}
-                outline={podcastData.message}
+                analysis={podcastData.script}
+                outline={podcastData.selected_text_preview}
                 isMultipleFiles={false}
-                comparison={podcastData.message}
+                comparison={podcastData.speakers}
               />
             </div>
           )}

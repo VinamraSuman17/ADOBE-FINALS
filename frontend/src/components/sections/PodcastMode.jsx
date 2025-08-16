@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react'
 import { Play, Pause, RotateCcw, Volume2, Clock, SkipForward } from 'lucide-react'
 
-const PodcastMode = ({ analysis="hey", outline, isMultipleFiles, comparison }) => {
+const PodcastMode = ({ analysis, outline, isMultipleFiles, comparison }) => {
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
   const [totalDuration, setTotalDuration] = useState(0)
@@ -44,25 +44,25 @@ const PodcastMode = ({ analysis="hey", outline, isMultipleFiles, comparison }) =
       if (comparison.common_themes && comparison.common_themes.length > 0) {
         script.push({
           title: "Common Themes",
-          content: `Key themes identified: ${comparison.common_themes.slice(0, 3).join(', ')}.`,
+          content: `Key themes identified: ${comparison}.`,
           duration: 6
         })
       }
     } else {
       script.push({
         title: "Introduction",  
-        content: `Welcome to your document analysis. We're exploring ${outline?.title || 'your document'}.`,
-        duration: 4
+        content: `Welcome to your document analysis. We're exploring ${analysis || 'your document'}.`,
+        duration: 200
       })
 
       script.push({
         title: "Document Overview",
-        content: `This document contains ${outline?.outline?.length || 0} main sections across ${analysis?.document_info?.page_count || 1} pages.`,
-        duration: 4
+        content: `This document contains ${outline?.length || 0} main sections across ${analysis || 1} pages.`,
+        duration: 20
       })
 
       // ✅ Add ALL sections from outline
-      const sectionsToProcess = outline?.outline || []
+      const sectionsToProcess = outline || []
       
       if (sectionsToProcess.length > 0) {
         sectionsToProcess.forEach((section, index) => {

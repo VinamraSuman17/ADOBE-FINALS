@@ -18,12 +18,12 @@ export const TypewriterEffectSmooth = ({
     return (
       <div>
         {wordsArray.map((word, idx) => (
-          <div key={`word-${idx}`} className="inline-block ml-4 text-8xl">
+          <div key={`word-${idx}`} className="inline-block mr-4 text-8xl">
             {word.text.map((char, index) => (
               <span
                 key={`char-${index}`}
                 className={cn(
-                  `dark:text-red-600 text-6xl text-black`,
+                  `dark:text-red-600 text-6xl text-black `,
                   word.className
                 )}
               >
@@ -39,15 +39,15 @@ export const TypewriterEffectSmooth = ({
   return (
     <div className={cn("flex space-x-1 gap-2", className)}>
       <motion.div
-        className="overflow-hidden pb-2"
+        className="overflow-hidden"
         initial={{ width: "0%" }}
         animate={{ width: "fit-content" }}
         transition={{
           duration: 3,       // typing speed
-          ease: "linear",
+          ease: "easeOut",
           repeat: Infinity,  // repeat forever
           repeatType: "loop",
-          repeatDelay: 1     // 👈 delay before restarting
+          repeatDelay: 2     // 👈 delay before restarting
         }}
       >
         <div

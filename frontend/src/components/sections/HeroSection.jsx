@@ -10,7 +10,7 @@ const HeroSection = () => {
     "https://assets.aceternity.com/animated-testimonials.webp",
     "https://assets.aceternity.com/cloudinary_bkp/Tooltip_luwy44.png",
     "https://assets.aceternity.com/github-globe.png",
-    "https://assets.aceternity.com/glare-card.png",
+    "https://res.cloudinary.com/dw3dcoqow/image/upload/v1755379696/Screenshot_2025-08-17_025652_mk7s6d.png",
     "https://assets.aceternity.com/layout-grid.png",
     "https://assets.aceternity.com/flip-text.png",
     "https://assets.aceternity.com/hero-highlight.png",
@@ -18,7 +18,7 @@ const HeroSection = () => {
     "https://assets.aceternity.com/placeholders-and-vanish-input.png",
     "https://assets.aceternity.com/shooting-stars-and-stars-background.png",
     "https://assets.aceternity.com/signup-form.png",
-    "https://assets.aceternity.com/cloudinary_bkp/stars_sxle3d.png",
+    "https://res.cloudinary.com/dw3dcoqow/image/upload/v1755379067/Screenshot_2025-08-17_024623_qtaiwb.png",
     "https://assets.aceternity.com/spotlight-new.webp",
     "https://assets.aceternity.com/cloudinary_bkp/Spotlight_ar5jpr.png",
     "https://assets.aceternity.com/cloudinary_bkp/Parallax_Scroll_pzlatw_anfkh7.png",
@@ -26,7 +26,7 @@ const HeroSection = () => {
     "https://assets.aceternity.com/cloudinary_bkp/Tracing_Beam_npujte.png",
     "https://assets.aceternity.com/cloudinary_bkp/typewriter-effect.png",
     "https://assets.aceternity.com/glowing-effect.webp",
-    "https://assets.aceternity.com/hover-border-gradient.png",
+    "https://res.cloudinary.com/dw3dcoqow/image/upload/v1755379696/Screenshot_2025-08-17_025733_vshqmk.png",
     "https://assets.aceternity.com/cloudinary_bkp/Infinite_Moving_Cards_evhzur.png",
     "https://assets.aceternity.com/cloudinary_bkp/Lamp_hlq3ln.png",
     "https://assets.aceternity.com/macbook-scroll.png",
@@ -64,17 +64,17 @@ const HeroSection = () => {
   return (
     <section
       id="home"
-      className="min-h-screen pt-24 pb-10 flex items-center justify-center px-4 bg-black"
+      className="min-h-screen mt-16 flex items-center justify-center px-4 bg-black overflow-hidden pt-12 pb-6"
     >
-      <div className="mx-auto dark:bg-neutral-800 absolute top-20 scale-110 max-w-[90.5vw] opacity-45">
+      <div className="dark:bg-neutral-800 absolute top-12 scale-110 w-[90vw] h-screen opacity-27 translate-y-10">
         <ThreeDMarquee images={images} />
       </div>
       <div className="max-w-6xl mx-auto text-center z-10">
         <div className="space-y-8">
-          <h1 className="text-5xl md:text-6xl font-bold leading-tight">
+          <h1 className="text-5xl md:text-6xl font-bold">
             <span className="text-white">Intelligent PDF</span>
             <div className="flex flex-col items-center justify-center text-red">
-              <TypewriterEffectSmooth words={words} className={'text-red-700  '}/>
+              <TypewriterEffectSmooth words={words}/>
             </div>
           </h1>
 
@@ -94,7 +94,7 @@ const HeroSection = () => {
             </Button>
           </div>
 
-          <div className="grid grid-cols-3 gap-8 max-w-2xl mx-auto pt-16 border-t border-gray-800">
+          <div className="grid grid-cols-3 gap-8 max-w-2xl mx-auto pt-12 border-t border-gray-800">
             <div className="text-center">
               <div className="text-3xl font-bold text-white">Enterprise</div>
               <div className="text-sm text-gray-400">Grade Security</div>

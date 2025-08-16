@@ -1,15 +1,6 @@
 import React, { useState, useEffect } from 'react'
 
 const Navbar = ({ currentSection }) => {
-  const [isScrolled, setIsScrolled] = useState(false)
-
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 50)
-    }
-    window.addEventListener('scroll', handleScroll)
-    return () => window.removeEventListener('scroll', handleScroll)
-  }, [])
 
   const navItems = [
     { id: 'home', label: 'Home' },
@@ -26,17 +17,17 @@ const Navbar = ({ currentSection }) => {
   }
 
   return (
-    <nav className={`fixed top-0 left-0 right-0 z-50 ${
-      isScrolled 
-        ? 'bg-black border-b border-gray-800' 
-        : 'bg-black'
-    }`}>
+    <nav className={`fixed top-0 left-0 right-0 z-50 bg-black/95`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-2">
+            <img src="https://res.cloudinary.com/dw3dcoqow/image/upload/v1755382288/Airbrush-Image-Enhancer-1755382165199-removebg-preview_u75uup.png" alt="" width={58}/>
+            <span className="text-2xl font-bold text-white">PDF</span>
+          </div>
+          {/* <div className="flex items-center space-x-3">
             <span className="text-2xl font-bold text-white">PDF</span>
             <span className="text-lg font-medium text-red">AI Assistant</span>
-          </div>
+          </div> */}
 
           <div className="hidden md:flex items-center space-x-8">
             {navItems.map((item) => (
