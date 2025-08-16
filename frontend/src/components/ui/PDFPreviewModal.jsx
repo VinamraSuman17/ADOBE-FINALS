@@ -121,8 +121,8 @@ const PDFPreviewModal = ({ snippet, isOpen, onClose }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 pt-[30vh] h-[100vh] pb-[10vh] bg-black/60 flex flex-col items-center justify-center z-50 overflow-y-scroll">
-      <div className="bg-gray-900 rounded-lg w-11/12 max-w-7xl flex flex-col">
+    <div className="fixed inset-0 h-[100vh] pt-[15vh] pb-[2vh] bg-black/60 flex flex-col items-center justify-center z-50 overflow-y-scroll">
+      <div className="bg-gray-900 rounded-lg w-11/12 max-w-7xl flex flex-col scale-[0.85]">
         {/* Header */}
         <div className="p-4 border-b border-gray-700 flex items-center justify-between">
           <div>
@@ -225,7 +225,7 @@ const PDFPreviewModal = ({ snippet, isOpen, onClose }) => {
         {/* Footer */}
         <div className="p-4 border-t border-gray-700 flex justify-between items-center">
           <div className="text-sm text-gray-400">
-            📋 Selected: "{snippet.section_text.substring(0, 100)}..."
+            Matched: "{snippet.section_text.substring(0, 100)}..."
           </div>
           <button
             onClick={() => {

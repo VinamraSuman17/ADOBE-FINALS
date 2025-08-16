@@ -5,6 +5,7 @@ import Loader from "../common/Loader";
 import PDFPreviewModal from "../ui/PDFPreviewModal";
 import { toast } from "react-toastify";
 import { CgBulb } from "react-icons/cg";
+import PodcastMode from "./PodcastMode";
 
 const UploadSection = ({
   onWorkflowComplete,
@@ -235,7 +236,7 @@ const UploadSection = ({
       }
 
       const podcastResult = await response.json();
-
+      console.log(podcastResult);
       if (podcastResult.success) {
         setPodcastData(podcastResult.podcast);
         console.log(
@@ -630,7 +631,8 @@ const UploadSection = ({
 
             {/* Stage 3: Deep AI Analysis Instructions */}
             {currentDocument && (
-              <div id="ai-analysis"
+              <div
+                id="ai-analysis"
                 className={`bg-gray-800 rounded-lg p-6 border ${
                   stage === "analysis" ? "border-red-600" : "border-gray-700"
                 }`}
@@ -1111,110 +1113,12 @@ const DeepAiAnalysisResultsPanel = ({
                 </div>
               </div>
 
-              {/* Enhanced Audio Progress Bar */}
-              {duration > 0 && (
-                <div className="mb-4">
-                  <div className="flex justify-between text-xs text-gray-400 mb-1">
-                    <span>{formatTime(currentTime)}</span>
-                    <span>{formatTime(duration)}</span>
-                  </div>
-                  <div className="w-full bg-gray-700 rounded-full h-2">
-                    <div
-                      className="bg-gradient-to-r from-purple-500 to-blue-500 h-2 rounded-full transition-all duration-300"
-                      style={{
-                        width: `${
-                          duration ? (currentTime / duration) * 100 : 0
-                        }%`,
-                      }}
-                    />
-                  </div>
-                </div>
-              )}
-
-              {/* AI-Enhanced Script Preview */}
-              {podcastData.script && (
-                <div className="bg-gray-800/50 p-4 rounded-lg mb-4">
-                  <h6 className="text-white font-medium mb-2 flex items-center space-x-2">
-                    <span>📜 AI-Generated Script Preview</span>
-                    <div className="px-2 py-1 bg-blue-600/20 rounded border border-blue-500/30">
-                      <span className="text-xs text-blue-300">Intelligent</span>
-                    </div>
-                  </h6>
-                  <div className="text-gray-300 text-sm max-h-32 overflow-y-auto space-y-2">
-                    {podcastData.script
-                      .split("\n")
-                      .slice(0, 8)
-                      .map((line, idx) => (
-                        <p key={idx} className="leading-relaxed">
-                          {line.trim().startsWith("Speaker") ? (
-                            <span className="text-purple-400 font-medium">
-                              {line}
-                            </span>
-                          ) : (
-                            <span>{line}</span>
-                          )}
-                        </p>
-                      ))}
-                    <p className="text-gray-500 italic">
-                      ...continue listening for complete AI analysis
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              {/* Enhanced Podcast Controls */}
-              <div className="flex items-center justify-between">
-                <div className="text-xs text-gray-400">
-                  {isPodcastPlaying ? (
-                    <span className="flex items-center space-x-2">
-                      <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                      <span>🎧 Now Playing AI Podcast...</span>
-                    </span>
-                  ) : (
-                    <span className="flex items-center space-x-2">
-                      <span>🤖</span>
-                      <span>Deep AI podcast ready to play</span>
-                    </span>
-                  )}
-                </div>
-                <div className="flex items-center space-x-3">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      if (podcastData.audio_url) {
-                        const link = document.createElement("a");
-                        link.href = podcastData.audio_url;
-                        link.download = `deep-ai-podcast-${Date.now()}.mp3`;
-                        link.click();
-                        toast("🎧 AI Podcast download started!");
-                      }
-                    }}
-                    className="text-gray-300 hover:text-white text-xs"
-                  >
-                    📥 Download
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      if (navigator.share) {
-                        navigator.share({
-                          title: "Deep AI Generated Podcast",
-                          text: "Check out this AI-powered podcast with deep document insights",
-                          url: podcastData.audio_url,
-                        });
-                      } else {
-                        navigator.clipboard.writeText(podcastData.audio_url);
-                        toast("🔗 Podcast link copied!");
-                      }
-                    }}
-                    className="text-gray-300 hover:text-white text-xs"
-                  >
-                    🔗 Share
-                  </Button>
-                </div>
-              </div>
+              <PodcastMode
+                analysis={podcastData.message}
+                outline={podcastData.message}
+                isMultipleFiles={false}
+                comparison={podcastData.message}
+              />
             </div>
           )}
         </div>
@@ -1457,23 +1361,6 @@ const DeepGeminiInsightsDisplay = ({ insights }) => {
               </p>
             </div>
           )}
-        </div>
-      </div>
-
-      {/* Enhanced Powered by Badge */}
-      <div className="mt-6 pt-4 border-t border-gray-700/50">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <div className="px-2 py-1 bg-green-600/20 rounded border border-green-500/30">
-              <span className="text-xs text-green-300">Real-time AI</span>
-            </div>
-            <div className="px-2 py-1 bg-purple-600/20 rounded border border-purple-500/30">
-              <span className="text-xs text-purple-300">PDF Preview</span>
-            </div>
-          </div>
-          <div className="text-xs text-gray-500">
-            Deep analysis with PDF preview capability
-          </div>
         </div>
       </div>
     </div>
