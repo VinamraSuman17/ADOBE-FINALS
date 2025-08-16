@@ -3,19 +3,27 @@ import Button from "../ui/Button";
 import AdobePdfViewer from "../ui/AdobePdfViewer";
 import Loader from "../common/Loader";
 import PDFPreviewModal from "../ui/PDFPreviewModal";
-import { toast } from 'react-toastify';
+import { toast } from "react-toastify";
+import { CgBulb } from "react-icons/cg";
 
-const UploadSection = ({ onWorkflowComplete, onUploadSuccess, loading, setLoading }) => {
+const UploadSection = ({
+  onWorkflowComplete,
+  onUploadSuccess,
+  loading,
+  setLoading,
+}) => {
   const [priorDocuments, setPriorDocuments] = useState([]);
   const [currentDocument, setCurrentDocument] = useState(null);
-  const [stage, setStage] = useState('prior'); // 'prior' | 'current' | 'analysis'
-  const [sessionId] = useState(() => `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`);
+  const [stage, setStage] = useState("prior"); // 'prior' | 'current' | 'analysis'
+  const [sessionId] = useState(
+    () => `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+  );
   const [priorUploadProgress, setPriorUploadProgress] = useState(0);
   const [currentUploadProgress, setCurrentUploadProgress] = useState(0);
   const [selectedText, setSelectedText] = useState(null);
   const [analysisResults, setAnalysisResults] = useState(null);
   const [analysisLoading, setAnalysisLoading] = useState(false);
-  
+
   // ✅ Enhanced state for DEEP AI-powered features
   const [podcastData, setPodcastData] = useState(null);
   const [isPodcastGenerating, setIsPodcastGenerating] = useState(false);
@@ -24,10 +32,13 @@ const UploadSection = ({ onWorkflowComplete, onUploadSuccess, loading, setLoadin
   const [duration, setDuration] = useState(0);
   const [isDeepAiAnalysisLoading, setIsDeepAiAnalysisLoading] = useState(false);
   const [documentsWithIds, setDocumentsWithIds] = useState([]);
-  
+
   // ✅ PDF Preview Modal State
-  const [previewModal, setPreviewModal] = useState({ isOpen: false, snippet: null });
-  
+  const [previewModal, setPreviewModal] = useState({
+    isOpen: false,
+    snippet: null,
+  });
+
   const pdfViewerRef = useRef(null);
   const audioRef = useRef(null);
 
@@ -49,16 +60,19 @@ const UploadSection = ({ onWorkflowComplete, onUploadSuccess, loading, setLoadin
     try {
       const formData = new FormData();
       Array.from(files).forEach((file, index) => {
-        if (file.type === 'application/pdf') {
-          formData.append('files', file);
+        if (file.type === "application/pdf") {
+          formData.append("files", file);
         }
       });
-      formData.append('user_session_id', sessionId);
+      formData.append("user_session_id", sessionId);
 
-      const response = await fetch('http://localhost:8080/ingest-prior-documents/', {
-        method: 'POST',
-        body: formData
-      });
+      const response = await fetch(
+        "http://localhost:8080/ingest-prior-documents/",
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
 
       if (!response.ok) {
         throw new Error(`Upload failed: ${response.status}`);
@@ -67,13 +81,16 @@ const UploadSection = ({ onWorkflowComplete, onUploadSuccess, loading, setLoadin
       const data = await response.json();
       setPriorDocuments(Array.from(files));
       setDocumentsWithIds(data.documents_with_ids || []); // ✅ Store documents with IDs
-      
-      console.log(`✅ Uploaded ${data.documents_processed} prior documents with unique IDs`);
-      toast(`Successfully uploaded ${data.documents_processed} prior documents for AI analysis with preview enabled!`);
 
+      console.log(
+        `✅ Uploaded ${data.documents_processed} prior documents with unique IDs`
+      );
+      toast(
+        `Successfully uploaded ${data.documents_processed} prior documents for AI analysis with preview enabled!`
+      );
     } catch (error) {
-      console.error('Prior documents upload failed:', error);
-      toast('Upload failed: ' + error.message);
+      console.error("Prior documents upload failed:", error);
+      toast("Upload failed: " + error.message);
     } finally {
       setLoading(false);
       setPriorUploadProgress(0);
@@ -87,7 +104,7 @@ const UploadSection = ({ onWorkflowComplete, onUploadSuccess, loading, setLoadin
       return;
     }
 
-    if (file.type !== 'application/pdf') {
+    if (file.type !== "application/pdf") {
       toast("Please select a PDF file only");
       return;
     }
@@ -97,13 +114,16 @@ const UploadSection = ({ onWorkflowComplete, onUploadSuccess, loading, setLoadin
 
     try {
       const formData = new FormData();
-      formData.append('file', file);
-      formData.append('user_session_id', sessionId);
+      formData.append("file", file);
+      formData.append("user_session_id", sessionId);
 
-      const response = await fetch('http://localhost:8080/set-current-document/', {
-        method: 'POST',
-        body: formData
-      });
+      const response = await fetch(
+        "http://localhost:8080/set-current-document/",
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
 
       if (!response.ok) {
         throw new Error(`Upload failed: ${response.status}`);
@@ -111,13 +131,14 @@ const UploadSection = ({ onWorkflowComplete, onUploadSuccess, loading, setLoadin
 
       const data = await response.json();
       setCurrentDocument(file);
-      
-      console.log(`✅ Current document uploaded: ${data.filename}`);
-      toast("Current document ready! Now select text for deep AI-powered insights.");
 
+      console.log(`✅ Current document uploaded: ${data.filename}`);
+      toast(
+        "Current document ready! Now select text for deep AI-powered insights."
+      );
     } catch (error) {
-      console.error('Current document upload failed:', error);
-      toast('Upload failed: ' + error.message);
+      console.error("Current document upload failed:", error);
+      toast("Upload failed: " + error.message);
     } finally {
       setLoading(false);
       setCurrentUploadProgress(0);
@@ -127,25 +148,27 @@ const UploadSection = ({ onWorkflowComplete, onUploadSuccess, loading, setLoadin
   // ✅ ENHANCED text selection with DEEP AI insights
   const handleTextSelection = async (selectionData) => {
     if (!selectionData?.text || selectionData.text.length < 15) {
-      toast("Please select more text (at least 15 characters) for comprehensive AI analysis");
+      toast(
+        "Please select more text (at least 15 characters) for comprehensive AI analysis"
+      );
       return;
     }
 
-    console.log('📝 Text selected for deep analysis:', selectionData);
+    console.log("📝 Text selected for deep analysis:", selectionData);
     setSelectedText(selectionData);
     setAnalysisLoading(true);
     setIsDeepAiAnalysisLoading(true);
 
     try {
       const formData = new FormData();
-      formData.append('selection_text', selectionData.text);
-      formData.append('page_number', selectionData.page.toString());
-      formData.append('user_session_id', sessionId);
+      formData.append("selection_text", selectionData.text);
+      formData.append("page_number", selectionData.page.toString());
+      formData.append("user_session_id", sessionId);
 
-      console.log('🤖 Requesting DEEP Gemini AI analysis...');
-      const response = await fetch('http://localhost:8080/analyze-selection/', {
-        method: 'POST',
-        body: formData
+      console.log("🤖 Requesting DEEP AI analysis...");
+      const response = await fetch("http://localhost:8080/analyze-selection/", {
+        method: "POST",
+        body: formData,
       });
 
       if (!response.ok) {
@@ -154,10 +177,14 @@ const UploadSection = ({ onWorkflowComplete, onUploadSuccess, loading, setLoadin
 
       const results = await response.json();
       setAnalysisResults(results);
-      
-      console.log('✅ Deep AI analysis completed:', results);
-      toast(`🤖 Deep AI insights generated! Found ${results.metadata?.total_insights || 0} insights with PDF preview available.`);
-      
+
+      console.log("✅ Deep AI analysis completed:", results);
+      toast(
+        `🤖 Deep AI insights generated! Found ${
+          results.metadata?.total_insights || 0
+        } insights with PDF preview available.`
+      );
+
       // Trigger parent callback
       onUploadSuccess?.({
         priorDocuments,
@@ -166,12 +193,11 @@ const UploadSection = ({ onWorkflowComplete, onUploadSuccess, loading, setLoadin
         analysisResults: results,
         sessionId,
         aiEnhanced: true,
-        deepAnalysis: true
+        deepAnalysis: true,
       });
-
     } catch (error) {
-      console.error('Deep AI analysis failed:', error);
-      toast('AI analysis failed: ' + error.message);
+      console.error("Deep AI analysis failed:", error);
+      toast("AI analysis failed: " + error.message);
     } finally {
       setAnalysisLoading(false);
       setIsDeepAiAnalysisLoading(false);
@@ -186,22 +212,22 @@ const UploadSection = ({ onWorkflowComplete, onUploadSuccess, loading, setLoadin
     }
 
     setIsPodcastGenerating(true);
-    
-    try {
-      console.log('🎧 Generating DEEP AI-enhanced podcast...');
 
-      const response = await fetch('http://localhost:8080/generate-podcast/', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+    try {
+      console.log("🎧 Generating DEEP AI-enhanced podcast...");
+
+      const response = await fetch("http://localhost:8080/generate-podcast/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           analysis_data: analysisResults,
-          selected_text: selectedText?.text || '',
+          selected_text: selectedText?.text || "",
           session_id: sessionId,
           voice_config: {
             speaker1: "AI Research Host",
-            speaker2: "Deep Analysis Expert"
-          }
-        })
+            speaker2: "Deep Analysis Expert",
+          },
+        }),
       });
 
       if (!response.ok) {
@@ -209,18 +235,22 @@ const UploadSection = ({ onWorkflowComplete, onUploadSuccess, loading, setLoadin
       }
 
       const podcastResult = await response.json();
-      
+
       if (podcastResult.success) {
         setPodcastData(podcastResult.podcast);
-        console.log('✅ Deep AI-enhanced podcast generated:', podcastResult.podcast);
-        toast("🎧 Deep AI-enhanced podcast ready! Advanced insights in audio format.");
+        console.log(
+          "✅ Deep AI-enhanced podcast generated:",
+          podcastResult.podcast
+        );
+        toast(
+          "🎧 Deep AI-enhanced podcast ready! Advanced insights in audio format."
+        );
       } else {
-        throw new Error(podcastResult.message || 'Podcast generation failed');
+        throw new Error(podcastResult.message || "Podcast generation failed");
       }
-
     } catch (error) {
-      console.error('❌ Podcast generation failed:', error);
-      toast('Podcast generation failed: ' + error.message);
+      console.error("❌ Podcast generation failed:", error);
+      toast("Podcast generation failed: " + error.message);
     } finally {
       setIsPodcastGenerating(false);
     }
@@ -237,26 +267,28 @@ const UploadSection = ({ onWorkflowComplete, onUploadSuccess, loading, setLoadin
             audioRef.current.src = podcastData.audio_url;
             audioRef.current.load();
           }
-          
+
           const playPromise = audioRef.current.play();
           if (playPromise !== undefined) {
-            playPromise.then(() => {
-              console.log('✅ Audio playback started');
-              setIsPodcastPlaying(true);
-            }).catch((error) => {
-              console.error('❌ Audio playback failed:', error);
-              toast('Audio playback failed. Please try again.');
-              setIsPodcastPlaying(false);
-            });
+            playPromise
+              .then(() => {
+                console.log("✅ Audio playback started");
+                setIsPodcastPlaying(true);
+              })
+              .catch((error) => {
+                console.error("❌ Audio playback failed:", error);
+                toast("Audio playback failed. Please try again.");
+                setIsPodcastPlaying(false);
+              });
           }
         }
       } catch (error) {
-        console.error('❌ Playback toggle error:', error);
-        toast('Audio control error: ' + error.message);
+        console.error("❌ Playback toggle error:", error);
+        toast("Audio control error: " + error.message);
         setIsPodcastPlaying(false);
       }
     } else {
-      toast('Audio not ready. Please regenerate the podcast.');
+      toast("Audio not ready. Please regenerate the podcast.");
     }
   }, [isPodcastPlaying, podcastData]);
 
@@ -274,14 +306,14 @@ const UploadSection = ({ onWorkflowComplete, onUploadSuccess, loading, setLoadin
   };
 
   const handleAudioError = (e) => {
-    console.error('❌ Audio error:', e);
-    toast('Audio playback error. Please try regenerating the podcast.');
+    console.error("❌ Audio error:", e);
+    toast("Audio playback error. Please try regenerating the podcast.");
     setIsPodcastPlaying(false);
   };
 
   // Navigate to snippet location
   const navigateToSnippet = (snippet) => {
-    console.log('🔗 Navigating to:', snippet);
+    console.log("🔗 Navigating to:", snippet);
     if (pdfViewerRef.current?.navigateToPage && snippet.page) {
       pdfViewerRef.current.navigateToPage(snippet.page - 1);
     }
@@ -291,9 +323,14 @@ const UploadSection = ({ onWorkflowComplete, onUploadSuccess, loading, setLoadin
   const handlePDFPreview = (snippet) => {
     if (snippet.document_id) {
       setPreviewModal({ isOpen: true, snippet });
-      console.log('👁️ Opening PDF preview for:', snippet.document_name, 'at page', snippet.page);
+      console.log(
+        "👁️ Opening PDF preview for:",
+        snippet.document_name,
+        "at page",
+        snippet.page
+      );
     } else {
-      toast('PDF preview not available for this document');
+      toast("PDF preview not available for this document");
     }
   };
 
@@ -303,42 +340,100 @@ const UploadSection = ({ onWorkflowComplete, onUploadSuccess, loading, setLoadin
         {/* Enhanced Header */}
         <div className="text-center mb-16">
           <h2 className="text-4xl font-bold text-white mb-6">
-            Adobe Challenge - <span className="text-red-600">Deep AI Document Intelligence</span>
+            Adobe Challenge -{" "}
+            <span className="text-red-600">Deep AI Document Intelligence</span>
           </h2>
           <div className="flex items-center justify-center space-x-4 mb-4">
-            <div className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-purple-600/20 to-blue-600/20 rounded-full border border-purple-500/30">
-              <span className="text-2xl">🤖</span>
-              <span className="text-sm text-purple-300 font-medium">Powered by Gemini 1.5 Pro</span>
-            </div>
             <div className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-green-600/20 to-emerald-600/20 rounded-full border border-green-500/30">
               <span className="text-xl">🧠</span>
-              <span className="text-sm text-green-300 font-medium">Deep Analysis Engine</span>
+              <span className="text-sm text-green-300 font-medium">
+                Deep Analysis Engine
+              </span>
             </div>
             <div className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-orange-600/20 to-red-600/20 rounded-full border border-orange-500/30">
               <span className="text-xl">👁️</span>
-              <span className="text-sm text-orange-300 font-medium">PDF Preview</span>
+              <span className="text-sm text-orange-300 font-medium">
+                PDF Preview
+              </span>
             </div>
           </div>
           <p className="text-xl text-gray-300 max-w-4xl mx-auto">
-            Upload your document library → Upload current document → Select text for revolutionary AI insights with PDF preview
+            Upload your document library → Upload current document → Select text
+            for revolutionary AI insights with PDF preview
           </p>
         </div>
 
         {/* Enhanced Progress Indicator */}
         <div className="flex justify-center mb-12">
           <div className="flex items-center space-x-4">
-            <div className={`flex items-center space-x-2 ${stage === 'prior' ? 'text-red-600' : priorDocuments.length > 0 ? 'text-green-400' : 'text-gray-500'}`}>
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${stage === 'prior' ? 'bg-red-600 text-white' : priorDocuments.length > 0 ? 'bg-green-400 text-black' : 'bg-gray-600'}`}>1</div>
-              <span className="font-medium">Knowledge Base ({priorDocuments.length}/30)</span>
+            <div
+              className={`flex items-center space-x-2 ${
+                stage === "prior"
+                  ? "text-red-600"
+                  : priorDocuments.length > 0
+                  ? "text-green-400"
+                  : "text-gray-500"
+              }`}
+            >
+              <div
+                className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                  stage === "prior"
+                    ? "bg-red-600 text-white"
+                    : priorDocuments.length > 0
+                    ? "bg-green-400 text-black"
+                    : "bg-gray-600"
+                }`}
+              >
+                1
+              </div>
+              <span className="font-medium">
+                Knowledge Base ({priorDocuments.length}/30)
+              </span>
             </div>
             <div className="w-12 h-0.5 bg-gray-600"></div>
-            <div className={`flex items-center space-x-2 ${stage === 'current' ? 'text-red-600' : currentDocument ? 'text-green-400' : 'text-gray-500'}`}>
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${stage === 'current' ? 'bg-red-600 text-white' : currentDocument ? 'bg-green-400 text-black' : 'bg-gray-600'}`}>2</div>
+            <div
+              className={`flex items-center space-x-2 ${
+                stage === "current"
+                  ? "text-red-600"
+                  : currentDocument
+                  ? "text-green-400"
+                  : "text-gray-500"
+              }`}
+            >
+              <div
+                className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                  stage === "current"
+                    ? "bg-red-600 text-white"
+                    : currentDocument
+                    ? "bg-green-400 text-black"
+                    : "bg-gray-600"
+                }`}
+              >
+                2
+              </div>
               <span className="font-medium">Current Document</span>
             </div>
             <div className="w-12 h-0.5 bg-gray-600"></div>
-            <div className={`flex items-center space-x-2 ${stage === 'analysis' ? 'text-red-600' : selectedText ? 'text-green-400' : 'text-gray-500'}`}>
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${stage === 'analysis' ? 'bg-red-600 text-white' : selectedText ? 'bg-green-400 text-black' : 'bg-gray-600'}`}>3</div>
+            <div
+              className={`flex items-center space-x-2 ${
+                stage === "analysis"
+                  ? "text-red-600"
+                  : selectedText
+                  ? "text-green-400"
+                  : "text-gray-500"
+              }`}
+            >
+              <div
+                className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                  stage === "analysis"
+                    ? "bg-red-600 text-white"
+                    : selectedText
+                    ? "bg-green-400 text-black"
+                    : "bg-gray-600"
+                }`}
+              >
+                3
+              </div>
               <span className="font-medium">Deep AI Analysis</span>
             </div>
           </div>
@@ -347,16 +442,25 @@ const UploadSection = ({ onWorkflowComplete, onUploadSuccess, loading, setLoadin
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
           {/* LEFT COLUMN - Upload Interface */}
           <div className="space-y-8">
-            
             {/* Stage 1: Prior Documents Upload */}
-            <div className={`bg-gray-800 rounded-lg p-6 border ${stage === 'prior' ? 'border-red-600' : priorDocuments.length > 0 ? 'border-green-400' : 'border-gray-700'}`}>
+            <div
+              className={`bg-gray-800 rounded-lg p-6 border ${
+                stage === "prior"
+                  ? "border-red-600"
+                  : priorDocuments.length > 0
+                  ? "border-green-400"
+                  : "border-gray-700"
+              }`}
+            >
               <h3 className="text-2xl font-bold text-white mb-4">
                 📚 Step 1: Build AI Knowledge Base
               </h3>
               <p className="text-gray-300 mb-6">
-                Upload 20-30 PDFs to create your intelligent document library. The AI will use these for deep cross-document analysis with PDF preview capability.
+                Upload 20-30 PDFs to create your intelligent document library.
+                The AI will use these for deep cross-document analysis with PDF
+                preview capability.
               </p>
-              
+
               {priorDocuments.length === 0 ? (
                 <div>
                   <input
@@ -364,22 +468,26 @@ const UploadSection = ({ onWorkflowComplete, onUploadSuccess, loading, setLoadin
                     multiple
                     accept=".pdf"
                     onChange={(e) => {
-                      handlePriorDocumentsUpload(e.target.files)
-                      setStage('current')
+                      handlePriorDocumentsUpload(e.target.files);
+                      setStage("current");
                     }}
                     className="hidden"
                     id="prior-docs-input"
                     disabled={loading}
                   />
-                  <label 
-                    htmlFor="prior-docs-input" 
+                  <label
+                    htmlFor="prior-docs-input"
                     className="cursor-pointer block w-full p-8 border-2 border-dashed border-gray-600 rounded-lg text-center hover:border-gray-500 transition-colors"
                   >
                     <div className="text-6xl text-gray-500 mb-4">🧠</div>
-                    <p className="text-white font-medium">Click to select 20-30 PDF files</p>
-                    <p className="text-gray-400 text-sm mt-2">Build your AI knowledge base with preview</p>
+                    <p className="text-white font-medium">
+                      Click to select 20-30 PDF files
+                    </p>
+                    <p className="text-gray-400 text-sm mt-2">
+                      Build your AI knowledge base with preview
+                    </p>
                   </label>
-                  
+
                   {priorUploadProgress > 0 && (
                     <div className="mt-4">
                       <div className="flex justify-between text-sm text-gray-300 mb-2">
@@ -387,7 +495,7 @@ const UploadSection = ({ onWorkflowComplete, onUploadSuccess, loading, setLoadin
                         <span>{priorUploadProgress}%</span>
                       </div>
                       <div className="w-full bg-gray-700 rounded-full h-2">
-                        <div 
+                        <div
                           className="bg-red-600 h-2 rounded-full transition-all duration-300"
                           style={{ width: `${priorUploadProgress}%` }}
                         />
@@ -399,14 +507,21 @@ const UploadSection = ({ onWorkflowComplete, onUploadSuccess, loading, setLoadin
                 <div>
                   <div className="flex items-center space-x-2 text-green-400 mb-4">
                     <span className="text-2xl">✅</span>
-                    <span className="font-medium">{priorDocuments.length} documents indexed with preview!</span>
+                    <span className="font-medium">
+                      {priorDocuments.length} documents indexed with preview!
+                    </span>
                     <div className="px-2 py-1 bg-green-600/20 rounded border border-green-500/30">
-                      <span className="text-xs text-green-300">Preview Ready</span>
+                      <span className="text-xs text-green-300">
+                        Preview Ready
+                      </span>
                     </div>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-32 overflow-y-auto mb-4">
                     {priorDocuments.slice(0, 10).map((file, idx) => (
-                      <div key={idx} className="text-xs bg-gray-700 text-gray-300 p-2 rounded flex items-center space-x-2">
+                      <div
+                        key={idx}
+                        className="text-xs bg-gray-700 text-gray-300 p-2 rounded flex items-center space-x-2"
+                      >
                         <span>🧠</span>
                         <span className="truncate">{file.name}</span>
                         <div className="px-1 py-0.5 bg-purple-600/20 rounded">
@@ -416,55 +531,69 @@ const UploadSection = ({ onWorkflowComplete, onUploadSuccess, loading, setLoadin
                     ))}
                     {priorDocuments.length > 10 && (
                       <div className="text-xs text-gray-400 p-2">
-                        ... and {priorDocuments.length - 10} more files with preview
+                        ... and {priorDocuments.length - 10} more files with
+                        preview
                       </div>
                     )}
                   </div>
-                  <Button 
-                    variant="secondary" 
-                    size="sm" 
-                    onClick={() => setStage('current')}
-                    className="w-full"
+                  <a
+                    href="#current-doc"
+                    className="inline-flex items-center justify-center rounded-md border-gray-300 bg-gray-100 text-gray-900 hover:bg-gray-200 px-3 py-1.5 text-sm font-medium shadow-sm"
                   >
                     Next: Upload Current Document →
-                  </Button>
+                  </a>
                 </div>
               )}
             </div>
 
             {/* Stage 2: Current Document Upload */}
-            {(priorDocuments.length > 0 || stage !== 'prior') && (
-              <div className={`bg-gray-800 rounded-lg p-6 border ${stage === 'current' ? 'border-red-600' : currentDocument ? 'border-green-400' : 'border-gray-700'}`}>
+            {(priorDocuments.length > 0 || stage !== "prior") && (
+              <div
+                id="current-doc"
+                className={`bg-gray-800 rounded-lg p-6 border ${
+                  stage === "current"
+                    ? "border-red-600"
+                    : currentDocument
+                    ? "border-green-400"
+                    : "border-gray-700"
+                }`}
+              >
                 <h3 className="text-2xl font-bold text-white mb-4">
                   📖 Step 2: Upload Analysis Target
                 </h3>
                 <p className="text-gray-300 mb-6">
-                  Upload the PDF you're currently reading. Select text from this document to discover AI-powered connections with your knowledge base and preview related documents.
+                  Upload the PDF you're currently reading. Select text from this
+                  document to discover AI-powered connections with your
+                  knowledge base and preview related documents.
                 </p>
-                
+
                 {!currentDocument ? (
                   <div>
                     <input
                       type="file"
                       accept=".pdf"
                       onChange={(e) => {
-                        setStage('current')
-                        handleCurrentDocumentUpload(e.target.files[0])
-                        setStage('analysis')
+                        setStage("current");
+                        handleCurrentDocumentUpload(e.target.files[0]);
+                        setStage("analysis");
                       }}
                       className="hidden"
                       id="current-doc-input"
                       disabled={loading}
                     />
-                    <label 
-                      htmlFor="current-doc-input" 
+                    <label
+                      htmlFor="current-doc-input"
                       className="cursor-pointer block w-full p-6 border-2 border-dashed border-gray-600 rounded-lg text-center hover:border-gray-500 transition-colors"
                     >
                       <div className="text-4xl text-gray-500 mb-3">🎯</div>
-                      <p className="text-white font-medium">Click to select 1 PDF file</p>
-                      <p className="text-gray-400 text-sm mt-1">Your analysis target document</p>
+                      <p className="text-white font-medium">
+                        Click to select 1 PDF file
+                      </p>
+                      <p className="text-gray-400 text-sm mt-1">
+                        Your analysis target document
+                      </p>
                     </label>
-                    
+
                     {currentUploadProgress > 0 && (
                       <div className="mt-4">
                         <div className="flex justify-between text-sm text-gray-300 mb-2">
@@ -472,7 +601,7 @@ const UploadSection = ({ onWorkflowComplete, onUploadSuccess, loading, setLoadin
                           <span>{currentUploadProgress}%</span>
                         </div>
                         <div className="w-full bg-gray-700 rounded-full h-2">
-                          <div 
+                          <div
                             className="bg-red-600 h-2 rounded-full transition-all duration-300"
                             style={{ width: `${currentUploadProgress}%` }}
                           />
@@ -484,16 +613,16 @@ const UploadSection = ({ onWorkflowComplete, onUploadSuccess, loading, setLoadin
                   <div>
                     <div className="flex items-center space-x-2 text-green-400 mb-4">
                       <span className="text-2xl">✅</span>
-                      <span className="font-medium">Analysis target: {currentDocument.name}</span>
+                      <span className="font-medium">
+                        Analysis target: {currentDocument.name}
+                      </span>
                     </div>
-                    <Button 
-                      variant="secondary" 
-                      size="sm" 
-                      onClick={() => setStage('analysis')}
-                      className="w-full"
+                    <a
+                      href="#ai-analysis"
+                      className="inline-flex items-center justify-center rounded-md border-gray-300 bg-gray-100 text-gray-900 hover:bg-gray-200 px-3 py-1.5 text-sm font-medium shadow-sm"
                     >
                       Next: Start Deep AI Analysis →
-                    </Button>
+                    </a>
                   </div>
                 )}
               </div>
@@ -501,34 +630,46 @@ const UploadSection = ({ onWorkflowComplete, onUploadSuccess, loading, setLoadin
 
             {/* Stage 3: Deep AI Analysis Instructions */}
             {currentDocument && (
-              <div className={`bg-gray-800 rounded-lg p-6 border ${stage === 'analysis' ? 'border-red-600' : 'border-gray-700'}`}>
+              <div id="ai-analysis"
+                className={`bg-gray-800 rounded-lg p-6 border ${
+                  stage === "analysis" ? "border-red-600" : "border-gray-700"
+                }`}
+              >
                 <div className="flex items-center space-x-3 mb-4">
                   <h3 className="text-2xl font-bold text-white">
                     🤖 Step 3: Deep AI Analysis
                   </h3>
-                  <div className="px-2 py-1 bg-purple-600/20 rounded border border-purple-500/30">
-                    <span className="text-xs text-purple-300">Gemini AI</span>
-                  </div>
                   <div className="px-2 py-1 bg-orange-600/20 rounded border border-orange-500/30">
                     <span className="text-xs text-orange-300">PDF Preview</span>
                   </div>
                 </div>
                 <p className="text-gray-300 mb-4">
-                  Select any text in the PDF viewer to unleash deep AI analysis across your {priorDocuments.length} document knowledge base. Preview related PDFs instantly with one click.
+                  Select any text in the PDF viewer to unleash deep AI analysis
+                  across your {priorDocuments.length} document knowledge base.
+                  Preview related PDFs instantly with one click.
                 </p>
-                
+
                 {selectedText && (
                   <div className="bg-gray-700 p-4 rounded-lg mb-4">
-                    <h4 className="font-bold text-white mb-2">Selected for AI Analysis:</h4>
+                    <h4 className="font-bold text-white mb-2">
+                      Selected for AI Analysis:
+                    </h4>
                     <p className="text-gray-300 text-sm bg-gray-600 p-2 rounded">
-                      "{selectedText.text.substring(0, 200)}{selectedText.text.length > 200 ? '...' : ''}"
+                      "{selectedText.text.substring(0, 200)}
+                      {selectedText.text.length > 200 ? "..." : ""}"
                     </p>
                     <div className="flex items-center justify-between mt-2">
-                      <p className="text-xs text-gray-400">Page {selectedText.page}</p>
+                      <p className="text-xs text-gray-400">
+                        Page {selectedText.page}
+                      </p>
                       <div className="flex items-center space-x-2">
-                        <p className="text-xs text-purple-400">{selectedText.text.length} characters</p>
+                        <p className="text-xs text-purple-400">
+                          {selectedText.text.length} characters
+                        </p>
                         <div className="px-1 py-0.5 bg-green-600/20 rounded">
-                          <span className="text-xs text-green-300">AI Ready</span>
+                          <span className="text-xs text-green-300">
+                            AI Ready
+                          </span>
                         </div>
                       </div>
                     </div>
@@ -540,18 +681,25 @@ const UploadSection = ({ onWorkflowComplete, onUploadSuccess, loading, setLoadin
                     <div className="flex items-center space-x-3 text-yellow-400 mb-2">
                       <Loader />
                       <div>
-                        <span className="font-medium">Deep AI Analysis in Progress...</span>
+                        <span className="font-medium">
+                          Deep AI Analysis in Progress...
+                        </span>
                       </div>
                     </div>
                     <div className="space-y-1 text-sm text-purple-300">
                       <div className="flex items-center space-x-2">
                         <span>🧠</span>
-                        <span>Gemini AI analyzing across {priorDocuments.length} documents...</span>
+                        <span>
+                          AI analyzing across {priorDocuments.length}{" "}
+                          documents...
+                        </span>
                       </div>
                       {isDeepAiAnalysisLoading && (
                         <div className="flex items-center space-x-2">
                           <span>🔍</span>
-                          <span>Generating insights with preview capabilities...</span>
+                          <span>
+                            Generating insights with preview capabilities...
+                          </span>
                         </div>
                       )}
                       <div className="flex items-center space-x-2">
@@ -566,12 +714,18 @@ const UploadSection = ({ onWorkflowComplete, onUploadSuccess, loading, setLoadin
                   <div className="mt-4 p-4 bg-gradient-to-r from-green-900/20 to-emerald-900/20 border border-green-400 rounded-lg">
                     <div className="flex items-center space-x-2 text-green-400 mb-2">
                       <span className="text-xl">🎉</span>
-                      <span className="font-medium">Deep AI Analysis Complete!</span>
+                      <span className="font-medium">
+                        Deep AI Analysis Complete!
+                      </span>
                       <div className="px-2 py-1 bg-green-600/20 rounded border border-green-500/30">
-                        <span className="text-xs text-green-300">AI Enhanced</span>
+                        <span className="text-xs text-green-300">
+                          AI Enhanced
+                        </span>
                       </div>
                       <div className="px-2 py-1 bg-purple-600/20 rounded border border-purple-500/30">
-                        <span className="text-xs text-purple-300">Preview Ready</span>
+                        <span className="text-xs text-purple-300">
+                          Preview Ready
+                        </span>
                       </div>
                     </div>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
@@ -579,25 +733,35 @@ const UploadSection = ({ onWorkflowComplete, onUploadSuccess, loading, setLoadin
                         <div className="text-lg font-bold text-purple-400">
                           {analysisResults.relevant_snippets?.length || 0}
                         </div>
-                        <div className="text-xs text-gray-400">Relevant Sections</div>
+                        <div className="text-xs text-gray-400">
+                          Relevant Sections
+                        </div>
                       </div>
                       <div className="text-center">
                         <div className="text-lg font-bold text-blue-400">
                           {analysisResults.metadata?.insight_categories || 0}
                         </div>
-                        <div className="text-xs text-gray-400">AI Categories</div>
+                        <div className="text-xs text-gray-400">
+                          AI Categories
+                        </div>
                       </div>
                       <div className="text-center">
                         <div className="text-lg font-bold text-green-400">
                           {analysisResults.metadata?.total_insights || 0}
                         </div>
-                        <div className="text-xs text-gray-400">Total Insights</div>
+                        <div className="text-xs text-gray-400">
+                          Total Insights
+                        </div>
                       </div>
                       <div className="text-center">
                         <div className="text-lg font-bold text-orange-400">
-                          {analysisResults.relevant_snippets?.filter(s => s.document_id).length || 0}
+                          {analysisResults.relevant_snippets?.filter(
+                            (s) => s.document_id
+                          ).length || 0}
                         </div>
-                        <div className="text-xs text-gray-400">Preview Available</div>
+                        <div className="text-xs text-gray-400">
+                          Preview Available
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -617,7 +781,7 @@ const UploadSection = ({ onWorkflowComplete, onUploadSuccess, loading, setLoadin
                   </div>
                 </h3>
                 <div className="min-h-[600px] bg-gray-900 rounded-lg">
-                  <AdobePdfViewer 
+                  <AdobePdfViewer
                     ref={pdfViewerRef}
                     pdfFile={currentDocument}
                     onTextSelection={handleTextSelection}
@@ -627,7 +791,7 @@ const UploadSection = ({ onWorkflowComplete, onUploadSuccess, loading, setLoadin
             )}
 
             {analysisResults && (
-              <DeepAiAnalysisResultsPanel 
+              <DeepAiAnalysisResultsPanel
                 results={analysisResults}
                 onSnippetClick={navigateToSnippet}
                 onPDFPreview={handlePDFPreview}
@@ -644,7 +808,7 @@ const UploadSection = ({ onWorkflowComplete, onUploadSuccess, loading, setLoadin
         </div>
 
         {/* ✅ PDF Preview Modal */}
-        <PDFPreviewModal 
+        <PDFPreviewModal
           snippet={previewModal.snippet}
           isOpen={previewModal.isOpen}
           onClose={() => setPreviewModal({ isOpen: false, snippet: null })}
@@ -682,35 +846,34 @@ const UploadSection = ({ onWorkflowComplete, onUploadSuccess, loading, setLoadin
 };
 
 // ✅ DEEP AI ANALYSIS RESULTS PANEL with PDF Preview
-const DeepAiAnalysisResultsPanel = ({ 
-  results, 
-  onSnippetClick, 
+const DeepAiAnalysisResultsPanel = ({
+  results,
+  onSnippetClick,
   onPDFPreview,
-  onGeneratePodcast, 
-  isPodcastGenerating, 
-  podcastData, 
-  onTogglePodcast, 
+  onGeneratePodcast,
+  isPodcastGenerating,
+  podcastData,
+  onTogglePodcast,
   isPodcastPlaying,
   currentTime = 0,
-  duration = 0
+  duration = 0,
 }) => {
-  const [activeTab, setActiveTab] = useState('insights');
+  const [activeTab, setActiveTab] = useState("insights");
 
   // Format time for display
   const formatTime = (seconds) => {
-    if (!seconds || isNaN(seconds)) return '0:00';
+    if (!seconds || isNaN(seconds)) return "0:00";
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
+    return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
   return (
     <div className="bg-gray-800 rounded-lg p-4 border border-gray-700">
       <div className="flex items-center space-x-3 mb-4">
-        <h3 className="text-xl font-bold text-white">Deep AI Analysis Results</h3>
-        <div className="px-3 py-1 bg-gradient-to-r from-purple-600/20 to-blue-600/20 rounded-full border border-purple-500/30">
-          <span className="text-xs text-purple-300 font-medium">Powered by Gemini AI</span>
-        </div>
+        <h3 className="text-xl font-bold text-white">
+          Deep AI Analysis Results
+        </h3>
         <div className="px-2 py-1 bg-green-600/20 rounded border border-green-500/30">
           <span className="text-xs text-green-300">Deep Analysis</span>
         </div>
@@ -718,43 +881,45 @@ const DeepAiAnalysisResultsPanel = ({
           <span className="text-xs text-orange-300">PDF Preview</span>
         </div>
       </div>
-      
+
       {/* Tab Navigation */}
       <div className="flex space-x-2 mb-6">
-        {['insights', 'snippets', 'podcast'].map(tab => (
-          <button 
+        {["insights", "snippets", "podcast"].map((tab) => (
+          <button
             key={tab}
             onClick={() => setActiveTab(tab)}
             className={`px-4 py-2 rounded text-sm font-medium transition-colors ${
-              activeTab === tab 
-                ? 'bg-red-600 text-white' 
-                : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+              activeTab === tab
+                ? "bg-red-600 text-white"
+                : "bg-gray-700 text-gray-300 hover:bg-gray-600"
             }`}
           >
-            {tab === 'insights' && '🧠 AI Insights'}
-            {tab === 'snippets' && '📋 PDF Previews'}
-            {tab === 'podcast' && '🎧 AI Podcast'}
+            {tab === "insights" && "🧠 AI Insights"}
+            {tab === "snippets" && "📋 PDF Previews"}
+            {tab === "podcast" && "🎧 AI Podcast"}
           </button>
         ))}
       </div>
-      
+
       {/* ✅ DEEP GEMINI AI INSIGHTS TAB */}
-      {activeTab === 'insights' && (
+      {activeTab === "insights" && (
         <DeepGeminiInsightsDisplay insights={results.insights} />
       )}
-      
+
       {/* ✅ SNIPPETS WITH PDF PREVIEW */}
-      {activeTab === 'snippets' && (
+      {activeTab === "snippets" && (
         <div className="space-y-3">
           <h4 className="font-bold text-white mb-3 flex items-center space-x-2">
             <span>📋 Cross-Document Connections</span>
-            <span className="text-sm text-gray-400">({results.relevant_snippets?.length || 0})</span>
+            <span className="text-sm text-gray-400">
+              ({results.relevant_snippets?.length || 0})
+            </span>
             <div className="px-2 py-1 bg-purple-600/20 rounded border border-purple-500/30">
               <span className="text-xs text-purple-300">Preview Ready</span>
             </div>
           </h4>
           {results.relevant_snippets?.map((snippet, index) => (
-            <div 
+            <div
               key={index}
               className="group p-3 bg-gray-700 border border-gray-600 rounded hover:bg-gray-600 transition-colors"
             >
@@ -763,16 +928,21 @@ const DeepAiAnalysisResultsPanel = ({
                   <span>📄 {snippet.document_name}</span>
                   {snippet.document_id && (
                     <div className="px-1 py-0.5 bg-purple-600/20 rounded">
-                      <span className="text-xs text-purple-300">👁️ Preview</span>
+                      <span className="text-xs text-purple-300">
+                        👁️ Preview
+                      </span>
                     </div>
                   )}
                 </div>
                 <div className="text-xs text-gray-400">
-                  Page {snippet.page} • {(snippet.similarity_score * 100).toFixed(0)}% match
+                  Page {snippet.page} •{" "}
+                  {(snippet.similarity_score * 100).toFixed(0)}% match
                 </div>
               </div>
-              <div className="text-gray-300 text-sm leading-relaxed mb-3">{snippet.section_text}</div>
-              
+              <div className="text-gray-300 text-sm leading-relaxed mb-3">
+                {snippet.section_text}
+              </div>
+
               {/* ✅ ENHANCED BUTTONS WITH PDF PREVIEW */}
               <div className="flex items-center justify-between pt-2 border-t border-gray-600/50">
                 <div className="flex items-center space-x-2">
@@ -791,7 +961,7 @@ const DeepAiAnalysisResultsPanel = ({
                       <span>Preview PDF</span>
                     </button>
                   )}
-                  
+
                   {/* View in current viewer */}
                   <button
                     type="button"
@@ -804,14 +974,14 @@ const DeepAiAnalysisResultsPanel = ({
                     <span>🔍</span>
                     <span>View Current</span>
                   </button>
-                  
+
                   {/* Copy text */}
                   <button
                     type="button"
                     onClick={(e) => {
                       e.preventDefault();
                       navigator.clipboard.writeText(snippet.section_text);
-                      toast('📋 Text copied to clipboard!');
+                      toast("📋 Text copied to clipboard!");
                     }}
                     className="text-xs bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded flex items-center space-x-1"
                   >
@@ -819,29 +989,36 @@ const DeepAiAnalysisResultsPanel = ({
                     <span>Copy Text</span>
                   </button>
                 </div>
-                
+
                 <div className="text-xs text-gray-500">
                   AI Relevance: {(snippet.similarity_score * 100).toFixed(1)}%
                   {snippet.document_id && (
-                    <span className="ml-2 text-purple-400">• Preview Available</span>
+                    <span className="ml-2 text-purple-400">
+                      • Preview Available
+                    </span>
                   )}
                 </div>
               </div>
             </div>
           ))}
-          
-          {(!results.relevant_snippets || results.relevant_snippets.length === 0) && (
+
+          {(!results.relevant_snippets ||
+            results.relevant_snippets.length === 0) && (
             <div className="p-6 bg-gray-700/50 rounded-lg text-center">
               <div className="text-4xl text-gray-500 mb-2">🤔</div>
-              <p className="text-gray-400">No cross-document connections found</p>
-              <p className="text-xs text-gray-500 mt-2">Try selecting different or longer text</p>
+              <p className="text-gray-400">
+                No cross-document connections found
+              </p>
+              <p className="text-xs text-gray-500 mt-2">
+                Try selecting different or longer text
+              </p>
             </div>
           )}
         </div>
       )}
-      
+
       {/* ✅ AI PODCAST TAB - Same as before */}
-      {activeTab === 'podcast' && (
+      {activeTab === "podcast" && (
         <div className="space-y-4">
           <h4 className="font-bold text-white mb-4 flex items-center space-x-2">
             <span>🎧 AI-Generated Podcast</span>
@@ -849,17 +1026,20 @@ const DeepAiAnalysisResultsPanel = ({
               <span className="text-xs text-purple-300">Deep Analysis</span>
             </div>
           </h4>
-          
+
           {!podcastData && !isPodcastGenerating && (
             <div className="bg-gradient-to-br from-purple-900/30 to-blue-900/30 p-6 rounded-lg border border-purple-500/40">
               <div className="text-center">
                 <div className="text-6xl mb-4">🎙️</div>
-                <h5 className="text-xl font-bold text-white mb-2">Create AI Podcast</h5>
+                <h5 className="text-xl font-bold text-white mb-2">
+                  Create AI Podcast
+                </h5>
                 <p className="text-gray-300 text-sm mb-6">
-                  Generate an engaging 2-speaker podcast discussion powered by deep Gemini AI insights from your cross-document analysis.
+                  Generate an engaging 2-speaker podcast discussion powered by
+                  deep AI insights from your cross-document analysis.
                 </p>
-                <Button 
-                  variant="primary" 
+                <Button
+                  variant="primary"
                   size="lg"
                   onClick={onGeneratePodcast}
                   className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-medium"
@@ -878,12 +1058,14 @@ const DeepAiAnalysisResultsPanel = ({
               <div className="text-center">
                 <div className="flex items-center justify-center space-x-3 mb-4">
                   <Loader />
-                  <span className="text-white font-medium">Generating Deep AI Podcast...</span>
+                  <span className="text-white font-medium">
+                    Generating Deep AI Podcast...
+                  </span>
                 </div>
                 <div className="space-y-2 text-sm text-purple-300">
                   <div className="flex items-center justify-center space-x-2">
                     <span>🧠</span>
-                    <span>Processing Gemini AI insights...</span>
+                    <span>Processing AI insights...</span>
                   </div>
                   <div className="flex items-center justify-center space-x-2">
                     <span>🎙️</span>
@@ -910,19 +1092,21 @@ const DeepAiAnalysisResultsPanel = ({
                   </h5>
                   <div className="flex items-center space-x-2">
                     <p className="text-gray-300 text-sm">
-                      Duration: {podcastData.duration || '~5 minutes'} • AI-Enhanced Discussion
+                      Duration: {podcastData.duration || "~5 minutes"} •
+                      AI-Enhanced Discussion
                     </p>
-                    <div className="px-2 py-1 bg-purple-600/20 rounded border border-purple-500/30">
-                      <span className="text-xs text-purple-300">Gemini Powered</span>
-                    </div>
                   </div>
                 </div>
                 <div className="flex items-center space-x-2">
                   <Button
                     onClick={onTogglePodcast}
-                    className={`${isPodcastPlaying ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'} text-white font-medium`}
+                    className={`${
+                      isPodcastPlaying
+                        ? "bg-red-600 hover:bg-red-700"
+                        : "bg-green-600 hover:bg-green-700"
+                    } text-white font-medium`}
                   >
-                    {isPodcastPlaying ? '⏸️ Pause' : '▶️ Play'}
+                    {isPodcastPlaying ? "⏸️ Pause" : "▶️ Play"}
                   </Button>
                 </div>
               </div>
@@ -935,9 +1119,13 @@ const DeepAiAnalysisResultsPanel = ({
                     <span>{formatTime(duration)}</span>
                   </div>
                   <div className="w-full bg-gray-700 rounded-full h-2">
-                    <div 
+                    <div
                       className="bg-gradient-to-r from-purple-500 to-blue-500 h-2 rounded-full transition-all duration-300"
-                      style={{ width: `${duration ? (currentTime / duration) * 100 : 0}%` }}
+                      style={{
+                        width: `${
+                          duration ? (currentTime / duration) * 100 : 0
+                        }%`,
+                      }}
                     />
                   </div>
                 </div>
@@ -953,16 +1141,23 @@ const DeepAiAnalysisResultsPanel = ({
                     </div>
                   </h6>
                   <div className="text-gray-300 text-sm max-h-32 overflow-y-auto space-y-2">
-                    {podcastData.script.split('\n').slice(0, 8).map((line, idx) => (
-                      <p key={idx} className="leading-relaxed">
-                        {line.trim().startsWith('Speaker') ? (
-                          <span className="text-purple-400 font-medium">{line}</span>
-                        ) : (
-                          <span>{line}</span>
-                        )}
-                      </p>
-                    ))}
-                    <p className="text-gray-500 italic">...continue listening for complete AI analysis</p>
+                    {podcastData.script
+                      .split("\n")
+                      .slice(0, 8)
+                      .map((line, idx) => (
+                        <p key={idx} className="leading-relaxed">
+                          {line.trim().startsWith("Speaker") ? (
+                            <span className="text-purple-400 font-medium">
+                              {line}
+                            </span>
+                          ) : (
+                            <span>{line}</span>
+                          )}
+                        </p>
+                      ))}
+                    <p className="text-gray-500 italic">
+                      ...continue listening for complete AI analysis
+                    </p>
                   </div>
                 </div>
               )}
@@ -988,11 +1183,11 @@ const DeepAiAnalysisResultsPanel = ({
                     size="sm"
                     onClick={() => {
                       if (podcastData.audio_url) {
-                        const link = document.createElement('a');
+                        const link = document.createElement("a");
                         link.href = podcastData.audio_url;
                         link.download = `deep-ai-podcast-${Date.now()}.mp3`;
                         link.click();
-                        toast('🎧 AI Podcast download started!');
+                        toast("🎧 AI Podcast download started!");
                       }
                     }}
                     className="text-gray-300 hover:text-white text-xs"
@@ -1005,13 +1200,13 @@ const DeepAiAnalysisResultsPanel = ({
                     onClick={() => {
                       if (navigator.share) {
                         navigator.share({
-                          title: 'Deep AI Generated Podcast',
-                          text: 'Check out this AI-powered podcast with deep document insights',
-                          url: podcastData.audio_url
+                          title: "Deep AI Generated Podcast",
+                          text: "Check out this AI-powered podcast with deep document insights",
+                          url: podcastData.audio_url,
                         });
                       } else {
                         navigator.clipboard.writeText(podcastData.audio_url);
-                        toast('🔗 Podcast link copied!');
+                        toast("🔗 Podcast link copied!");
                       }
                     }}
                     className="text-gray-300 hover:text-white text-xs"
@@ -1030,28 +1225,82 @@ const DeepAiAnalysisResultsPanel = ({
 
 // ✅ DEEP GEMINI AI INSIGHTS COMPONENT - Same as before
 const DeepGeminiInsightsDisplay = ({ insights }) => {
-  const [activeInsight, setActiveInsight] = useState('deep_similarities');
+  const [activeInsight, setActiveInsight] = useState("deep_similarities");
   const [isExpanded, setIsExpanded] = useState(false);
-  
+
   const insightCategories = [
-    { key: 'deep_similarities', title: '🔗 Deep Similarities', icon: '🔗', color: 'blue', description: 'Advanced conceptual alignments' },
-    { key: 'strategic_contradictions', title: '⚡ Strategic Conflicts', icon: '⚡', color: 'red', description: 'Fundamental disagreements' },
-    { key: 'breakthrough_connections', title: '🚀 Breakthrough Links', icon: '🚀', color: 'green', description: 'Revolutionary insights' },
-    { key: 'strategic_insights', title: '💡 Strategic Intelligence', icon: '💡', color: 'yellow', description: 'Actionable recommendations' },
-    { key: 'evolutionary_variations', title: '🔄 Evolution Patterns', icon: '🔄', color: 'purple', description: 'How concepts evolved' },
-    { key: 'powerful_examples', title: '📋 Compelling Evidence', icon: '📋', color: 'indigo', description: 'Strong supporting cases' },
-    { key: 'knowledge_synthesis', title: '🧠 Meta-Analysis', icon: '🧠', color: 'pink', description: 'Higher-order insights' },
-    { key: 'critical_limitations', title: '⚠️ Critical Constraints', icon: '⚠️', color: 'orange', description: 'Important limitations' }
+    {
+      key: "deep_similarities",
+      title: "Deep Similarities",
+      icon: "🔗",
+      color: "blue",
+      description: "Advanced conceptual alignments",
+    },
+    {
+      key: "strategic_contradictions",
+      title: "⚡ Strategic Conflicts",
+      icon: "⚡",
+      color: "red",
+      description: "Fundamental disagreements",
+    },
+    {
+      key: "breakthrough_connections",
+      title: "🚀 Breakthrough Links",
+      icon: "🚀",
+      color: "green",
+      description: "Revolutionary insights",
+    },
+    {
+      key: "strategic_insights",
+      title: "💡 Strategic Intelligence",
+      icon: "💡",
+      color: "yellow",
+      description: "Actionable recommendations",
+    },
+    {
+      key: "evolutionary_variations",
+      title: "🔄 Evolution Patterns",
+      icon: "🔄",
+      color: "purple",
+      description: "How concepts evolved",
+    },
+    {
+      key: "powerful_examples",
+      title: "📋 Compelling Evidence",
+      icon: "📋",
+      color: "indigo",
+      description: "Strong supporting cases",
+    },
+    {
+      key: "knowledge_synthesis",
+      title: "🧠 Meta-Analysis",
+      icon: "🧠",
+      color: "pink",
+      description: "Higher-order insights",
+    },
+    {
+      key: "critical_limitations",
+      title: "⚠️ Critical Constraints",
+      icon: "⚠️",
+      color: "orange",
+      description: "Important limitations",
+    },
   ];
 
   const getInsightQuality = (insights) => {
     const totalInsights = Object.values(insights).flat().length;
-    const avgLength = Object.values(insights).flat().reduce((acc, insight) => acc + insight.length, 0) / totalInsights;
-    
-    if (totalInsights > 15 && avgLength > 100) return { level: 'Exceptional', color: 'green', icon: '🏆' };
-    if (totalInsights > 10 && avgLength > 80) return { level: 'Advanced', color: 'blue', icon: '🎯' };
-    if (totalInsights > 5 && avgLength > 60) return { level: 'Good', color: 'yellow', icon: '👍' };
-    return { level: 'Basic', color: 'orange', icon: '📊' };
+    const avgLength =
+      Object.values(insights)
+        .flat()
+        .reduce((acc, insight) => acc + insight.length, 0) / totalInsights;
+
+    if (totalInsights > 15 && avgLength > 100)
+      return { level: "Exceptional", color: "green", icon: "🏆" };
+    if (totalInsights > 10 && avgLength > 80)
+      return { level: "Advanced", color: "blue", icon: "🎯" };
+    if (totalInsights > 5 && avgLength > 60)
+      return { level: "Good", color: "yellow", icon: "👍" };
+    return { level: "Basic", color: "orange", icon: "📊" };
   };
 
   const quality = getInsightQuality(insights);
@@ -1062,25 +1311,14 @@ const DeepGeminiInsightsDisplay = ({ insights }) => {
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center space-x-3">
           <div className="p-3 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full animate-pulse">
-            <span className="text-2xl">🤖</span>
+            <span className="text-2xl">
+              <CgBulb />
+            </span>
           </div>
           <div>
-            <h4 className="text-xl font-bold text-white">Deep Gemini AI Analysis</h4>
-            <div className="flex items-center space-x-2">
-              <p className="text-gray-300 text-sm">Revolutionary document intelligence</p>
-              <div className={`px-2 py-1 bg-${quality.color}-600/20 rounded border border-${quality.color}-500/30`}>
-                <span className="text-xs font-medium">{quality.icon} {quality.level}</span>
-              </div>
-            </div>
+            <h4 className="text-xl font-bold text-white">Insights</h4>
           </div>
         </div>
-        
-        <button
-          onClick={() => setIsExpanded(!isExpanded)}
-          className="p-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors"
-        >
-          <span className="text-white text-sm">{isExpanded ? '📖 Compact' : '🔍 Expand'}</span>
-        </button>
       </div>
 
       {/* AI Analytics Dashboard */}
@@ -1093,13 +1331,21 @@ const DeepGeminiInsightsDisplay = ({ insights }) => {
         </div>
         <div className="text-center">
           <div className="text-2xl font-bold text-blue-400">
-            {Object.keys(insights).filter(k => insights[k]?.length > 0).length}
+            {
+              Object.keys(insights).filter((k) => insights[k]?.length > 0)
+                .length
+            }
           </div>
           <div className="text-xs text-gray-400">Categories</div>
         </div>
         <div className="text-center">
           <div className="text-2xl font-bold text-green-400">
-            {Math.round(Object.values(insights).flat().reduce((acc, insight) => acc + insight.length, 0) / Object.values(insights).flat().length) || 0}
+            {Math.round(
+              Object.values(insights)
+                .flat()
+                .reduce((acc, insight) => acc + insight.length, 0) /
+                Object.values(insights).flat().length
+            ) || 0}
           </div>
           <div className="text-xs text-gray-400">Avg Depth</div>
         </div>
@@ -1120,14 +1366,16 @@ const DeepGeminiInsightsDisplay = ({ insights }) => {
               className={`relative px-3 py-2 rounded-full text-sm font-medium transition-all group ${
                 activeInsight === key
                   ? `bg-${color}-600 text-white shadow-lg scale-105`
-                  : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                  : "bg-gray-700 text-gray-300 hover:bg-gray-600"
               }`}
               title={description}
             >
               <span className="mr-1">{icon}</span>
-              {title.split(' ').pop()}
+              {title.split(" ").pop()}
               {count > 0 && (
-                <div className={`absolute -top-2 -right-2 w-5 h-5 bg-${color}-500 text-xs rounded-full flex items-center justify-center text-white`}>
+                <div
+                  className={`absolute -top-2 -right-2 w-5 h-5 bg-${color}-500 text-xs rounded-full flex items-center justify-center text-white`}
+                >
                   {count}
                 </div>
               )}
@@ -1140,19 +1388,31 @@ const DeepGeminiInsightsDisplay = ({ insights }) => {
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <h5 className="text-lg font-semibold text-white flex items-center space-x-2">
-            <span>{insightCategories.find(cat => cat.key === activeInsight)?.icon}</span>
-            <span>{insightCategories.find(cat => cat.key === activeInsight)?.title}</span>
-            <span className="text-sm text-gray-400">({insights[activeInsight]?.length || 0})</span>
+            <span>
+              {insightCategories.find((cat) => cat.key === activeInsight)?.icon}
+            </span>
+            <span>
+              {
+                insightCategories.find((cat) => cat.key === activeInsight)
+                  ?.title
+              }
+            </span>
+            <span className="text-sm text-gray-400">
+              ({insights[activeInsight]?.length || 0})
+            </span>
           </h5>
           <div className="text-xs text-gray-400">
-            {insightCategories.find(cat => cat.key === activeInsight)?.description}
+            {
+              insightCategories.find((cat) => cat.key === activeInsight)
+                ?.description
+            }
           </div>
         </div>
-        
+
         <div className="space-y-4">
           {insights[activeInsight]?.length > 0 ? (
             insights[activeInsight].map((insight, idx) => (
-              <div 
+              <div
                 key={idx}
                 className="group relative p-5 bg-gray-800/60 rounded-lg border border-gray-600/50 hover:border-gray-500/50 transition-all hover:bg-gray-800/80"
               >
@@ -1162,14 +1422,14 @@ const DeepGeminiInsightsDisplay = ({ insights }) => {
                   </div>
                   <div className="flex-1">
                     <p className="text-gray-200 leading-relaxed">{insight}</p>
-                    
+
                     {/* Enhanced insight metadata */}
                     <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-700/50">
                       <div className="flex items-center space-x-2 text-xs text-gray-400">
                         <span>🧠 {insight.length} chars</span>
                         <span>•</span>
                         <span>🤖 AI Generated</span>
-                        {insight.includes('Page') && (
+                        {insight.includes("Page") && (
                           <>
                             <span>•</span>
                             <span>📄 With Reference</span>
@@ -1189,8 +1449,12 @@ const DeepGeminiInsightsDisplay = ({ insights }) => {
           ) : (
             <div className="p-6 bg-gray-800/30 rounded-lg border border-gray-600/30 text-center">
               <div className="text-4xl text-gray-500 mb-2">🤔</div>
-              <p className="text-gray-400 italic">No {activeInsight.replace('_', ' ')} found in current analysis</p>
-              <p className="text-xs text-gray-500 mt-2">Try selecting more or different text for richer AI insights</p>
+              <p className="text-gray-400 italic">
+                No {activeInsight.replace("_", " ")} found in current analysis
+              </p>
+              <p className="text-xs text-gray-500 mt-2">
+                Try selecting more or different text for richer AI insights
+              </p>
             </div>
           )}
         </div>
@@ -1200,9 +1464,6 @@ const DeepGeminiInsightsDisplay = ({ insights }) => {
       <div className="mt-6 pt-4 border-t border-gray-700/50">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <div className="px-3 py-1 bg-gradient-to-r from-blue-600/20 to-purple-600/20 rounded-full border border-blue-500/30">
-              <span className="text-xs text-blue-300 font-medium">Powered by Google Gemini 1.5 Pro</span>
-            </div>
             <div className="px-2 py-1 bg-green-600/20 rounded border border-green-500/30">
               <span className="text-xs text-green-300">Real-time AI</span>
             </div>
