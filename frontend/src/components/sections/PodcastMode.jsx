@@ -1,34 +1,55 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react'
 import { Play, Pause, RotateCcw, Volume2, Clock, SkipForward } from 'lucide-react'
 
-
 const PodcastMode = ({ analysis, outline, isMultipleFiles, comparison }) => {
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
   const [totalDuration, setTotalDuration] = useState(0)
   const [podcastScript, setPodcastScript] = useState([])
   const [currentSection, setCurrentSection] = useState(0)
-  const speechSynthesis = useRef(window.speechSynthesis)
-  const utteranceRef = useRef(null)
+
+  const speechSynthesisRef = useRef(window.speechSynthesis)
   const progressInterval = useRef(null)
   const sectionTimeoutRef = useRef(null)
-  const isPlayingRef = useRef(false) // ✅ Ref to track playing state reliably
+  const isPlayingRef = useRef(false)
 
-  const generateSectionDescription = (sectionText, persona) => {
-    const descriptions = {
-      'student': 'important learning content that builds foundational knowledge',
-      'business_analyst': 'critical business information for strategic analysis',  
-      'researcher': 'valuable research data that supports empirical findings',
-      'project_manager': 'essential project information for planning and execution',
-      'legal_professional': 'relevant legal information for case preparation',
-      'financial_analyst': 'financial data important for quantitative analysis'
+  // 🔹 Split long text into smaller utterances
+  const speakText = (text, onChunkEnd, onComplete) => {
+    const chunks = text.match(/.{1,250}(\s|$)/g) || []
+    let index = 0
+
+    const speakNext = () => {
+      if (!isPlayingRef.current || index >= chunks.length) {
+        onComplete && onComplete()
+        return
+      }
+
+      const utterance = new SpeechSynthesisUtterance(chunks[index])
+      utterance.rate = 1.1
+      utterance.pitch = 1.0
+      utterance.volume = 1.0
+
+      utterance.onend = () => {
+        onChunkEnd && onChunkEnd()
+        index++
+        speakNext()
+      }
+
+      utterance.onerror = (e) => {
+        console.error("❌ SPEECH ERROR in chunk:", e)
+        index++
+        speakNext()
+      }
+
+      speechSynthesisRef.current.speak(utterance)
     }
-    return descriptions[persona] || 'significant information relevant to your analysis'
+
+    speakNext()
   }
 
   const generateComprehensivePodcastScript = useCallback(() => {
     const script = []
-    
+
     if (isMultipleFiles && comparison) {
       script.push({
         title: "Introduction",
@@ -51,22 +72,22 @@ const PodcastMode = ({ analysis, outline, isMultipleFiles, comparison }) => {
       }
     } else {
       script.push({
-        title: "Introduction",  
+        title: "Introduction",
         content: `Welcome to your document analysis. We're exploring ${analysis || 'your document'}.`,
-        duration: 200
+        duration: 20 // keep realistic
       })
 
       script.push({
         title: "Document Overview",
         content: `This document contains ${outline?.length || 0} main sections across ${analysis || 1} pages.`,
-        duration: 20
+        duration: 10
       })
 
       if (analysis && analysis > 0) {
         script.push({
           title: "Key Insights",
           content: `Key insights: ${analysis}.`,
-          duration: 6
+          duration: 8
         })
       }
     }
@@ -76,6 +97,7 @@ const PodcastMode = ({ analysis, outline, isMultipleFiles, comparison }) => {
       content: `This concludes your analysis. Thank you for using our service.`,
       duration: 4
     })
+
     setPodcastScript(script)
     setTotalDuration(script.reduce((total, section) => total + section.duration, 0))
   }, [analysis, outline, isMultipleFiles, comparison])
@@ -86,16 +108,13 @@ const PodcastMode = ({ analysis, outline, isMultipleFiles, comparison }) => {
     }
   }, [generateComprehensivePodcastScript])
 
-  // ✅ COMPLETELY REWRITTEN playSection with bulletproof progression
+  // 🔹 Play a section (with chunked utterances)
   const playSection = useCallback((sectionIndex) => {
-    
-    // ✅ Clear any existing timeouts
     if (sectionTimeoutRef.current) {
       clearTimeout(sectionTimeoutRef.current)
       sectionTimeoutRef.current = null
     }
-    
-    // ✅ Check if we've reached the end
+
     if (sectionIndex >= podcastScript.length) {
       setIsPlaying(false)
       isPlayingRef.current = false
@@ -105,51 +124,20 @@ const PodcastMode = ({ analysis, outline, isMultipleFiles, comparison }) => {
     }
 
     const section = podcastScript[sectionIndex]
-    if (!section) {
-      setIsPlaying(false)
-      isPlayingRef.current = false
-      return
-    }
+    if (!section) return
 
-    // ✅ Update current section
     setCurrentSection(sectionIndex)
-    
-    // ✅ Cancel any existing speech
-    if (speechSynthesis.current.speaking) {
-      speechSynthesis.current.cancel()
-    }
-    
-    // ✅ Small delay to ensure speech synthesis is ready
-    setTimeout(() => {
-      if (!isPlayingRef.current) {
-        return
-      }
 
-      const utterance = new SpeechSynthesisUtterance(section.content)
-      utterance.rate = 1.1
-      utterance.pitch = 1.0
-      utterance.volume = 1.0
-      
-      let hasEnded = false
-      
-      utterance.onstart = () => {
-        startProgressTracking(section.duration)
-      }
+    // Start tracking progress
+    startProgressTracking(section.duration)
 
-      utterance.onend = () => {
-        if (hasEnded) return // Prevent double execution
-        hasEnded = true
-        
-        clearInterval(progressInterval.current)
-        
-        // ✅ Move to next section ONLY if still playing
+    // Speak with chunking
+    speakText(
+      section.content,
+      null,
+      () => {
         if (isPlayingRef.current && sectionIndex + 1 < podcastScript.length) {
-          // Small delay before next section
-          setTimeout(() => {
-            if (isPlayingRef.current) {
-              playSection(sectionIndex + 1)
-            }
-          }, 500)
+          setTimeout(() => playSection(sectionIndex + 1), 400)
         } else if (sectionIndex + 1 >= podcastScript.length) {
           setIsPlaying(false)
           isPlayingRef.current = false
@@ -157,50 +145,14 @@ const PodcastMode = ({ analysis, outline, isMultipleFiles, comparison }) => {
           setCurrentTime(0)
         }
       }
+    )
 
-      utterance.onerror = (event) => {
-        console.error(`❌ SPEECH ERROR: ${section.title}`, event)
-        if (hasEnded) return
-        hasEnded = true
-        
-        clearInterval(progressInterval.current)
-        
-        // ✅ Continue to next section even on error
-        if (isPlayingRef.current && sectionIndex + 1 < podcastScript.length) {
-          setTimeout(() => {
-            if (isPlayingRef.current) {
-              playSection(sectionIndex + 1)
-            }
-          }, 1000)
-        }
+    // Safety timeout (if speech engine misbehaves)
+    sectionTimeoutRef.current = setTimeout(() => {
+      if (isPlayingRef.current && sectionIndex + 1 < podcastScript.length) {
+        playSection(sectionIndex + 1)
       }
-
-      utteranceRef.current = utterance
-      speechSynthesis.current.speak(utterance)
-      
-      // ✅ ULTIMATE SAFETY NET: Force next section after timeout
-      sectionTimeoutRef.current = setTimeout(() => {
-        if (!hasEnded && isPlayingRef.current) {
-          hasEnded = true
-          clearInterval(progressInterval.current)
-          
-          if (speechSynthesis.current.speaking) {
-            speechSynthesis.current.cancel()
-          }
-          
-          if (sectionIndex + 1 < podcastScript.length) {
-            playSection(sectionIndex + 1)
-          } else {
-            setIsPlaying(false)
-            isPlayingRef.current = false
-            setCurrentSection(0)
-            setCurrentTime(0)
-          }
-        }
-      }, (section.duration + 1) * 1000) // Section duration + 1 second
-      
-    }, 300)
-    
+    }, (section.duration + 2) * 1000)
   }, [podcastScript])
 
   const startProgressTracking = (duration) => {
@@ -212,7 +164,7 @@ const PodcastMode = ({ analysis, outline, isMultipleFiles, comparison }) => {
         const newTime = prev + 0.3
         return newTime >= totalDuration ? totalDuration : newTime
       })
-      
+
       if (elapsed >= duration) {
         clearInterval(progressInterval.current)
       }
@@ -220,28 +172,20 @@ const PodcastMode = ({ analysis, outline, isMultipleFiles, comparison }) => {
   }
 
   const playPodcast = () => {
-    if (podcastScript.length === 0) {
-      return
-    }
-    
+    if (podcastScript.length === 0) return
+
     setIsPlaying(true)
-    isPlayingRef.current = true // ✅ Set ref immediately
+    isPlayingRef.current = true
     setCurrentSection(0)
     setCurrentTime(0)
-    
-    // ✅ Start first section immediately
-    setTimeout(() => {
-      playSection(0)
-    }, 100)
+
+    setTimeout(() => playSection(0), 200)
   }
 
   const pausePodcast = () => {
     setIsPlaying(false)
-    isPlayingRef.current = false // ✅ Set ref immediately
-    
-    if (speechSynthesis.current.speaking) {
-      speechSynthesis.current.cancel()
-    }
+    isPlayingRef.current = false
+    speechSynthesisRef.current.cancel()
     clearInterval(progressInterval.current)
     if (sectionTimeoutRef.current) {
       clearTimeout(sectionTimeoutRef.current)
@@ -257,21 +201,9 @@ const PodcastMode = ({ analysis, outline, isMultipleFiles, comparison }) => {
 
   const skipToNext = () => {
     if (currentSection + 1 < podcastScript.length) {
-      
-      // Cancel current
-      if (speechSynthesis.current.speaking) {
-        speechSynthesis.current.cancel()
-      }
-      clearInterval(progressInterval.current)
-      if (sectionTimeoutRef.current) {
-        clearTimeout(sectionTimeoutRef.current)
-      }
-      
-      // Start next
+      pausePodcast()
       setTimeout(() => {
-        if (isPlayingRef.current) {
-          playSection(currentSection + 1)
-        }
+        if (isPlayingRef.current) playSection(currentSection + 1)
       }, 200)
     }
   }
@@ -294,30 +226,26 @@ const PodcastMode = ({ analysis, outline, isMultipleFiles, comparison }) => {
         </span>
       </div>
 
-      {/* Debug Info */}
       <div className="mb-4 p-2 bg-gray-700 rounded text-xs text-gray-300">
-        Current: {currentSection + 1}/{podcastScript.length} • 
-        Playing: {isPlaying ? 'YES' : 'NO'} • 
+        Current: {currentSection + 1}/{podcastScript.length} •
+        Playing: {isPlaying ? 'YES' : 'NO'} •
         Section: {podcastScript[currentSection]?.title || 'None'}
       </div>
 
-      {/* Audio Player */}
       <div className="bg-gray-900 rounded-lg p-6 mb-6 border border-gray-600">
-        {/* Progress Bar */}
         <div className="mb-6">
           <div className="flex justify-between text-sm text-gray-400 mb-2">
             <span>{formatTime(currentTime)}</span>
             <span>{formatTime(totalDuration)}</span>
           </div>
           <div className="w-full bg-gray-700 rounded-full h-3">
-            <div 
+            <div
               className="bg-gradient-to-r from-red-600 to-red-500 h-3 rounded-full transition-all duration-300"
               style={{ width: `${progressPercentage}%` }}
             />
           </div>
         </div>
 
-        {/* Controls */}
         <div className="flex items-center justify-center space-x-4">
           <button
             onClick={resetPodcast}
@@ -326,7 +254,7 @@ const PodcastMode = ({ analysis, outline, isMultipleFiles, comparison }) => {
           >
             <RotateCcw size={18} />
           </button>
-          
+
           <button
             onClick={skipToNext}
             disabled={currentSection + 1 >= podcastScript.length || !isPlaying}
@@ -335,7 +263,7 @@ const PodcastMode = ({ analysis, outline, isMultipleFiles, comparison }) => {
           >
             <SkipForward size={18} />
           </button>
-          
+
           <button
             onClick={isPlaying ? pausePodcast : playPodcast}
             disabled={podcastScript.length === 0}
@@ -353,7 +281,6 @@ const PodcastMode = ({ analysis, outline, isMultipleFiles, comparison }) => {
           </div>
         </div>
 
-        {/* Current Section Display */}
         {podcastScript[currentSection] && (
           <div className="mt-6 text-center">
             <div className={`inline-flex items-center space-x-3 rounded-full px-6 py-3 border ${
@@ -375,7 +302,6 @@ const PodcastMode = ({ analysis, outline, isMultipleFiles, comparison }) => {
         )}
       </div>
 
-      {/* All Sections List */}
       <div className="space-y-2 max-h-48 overflow-y-auto">
         <h4 className="text-white font-medium mb-3">All Sections:</h4>
         {podcastScript.map((section, index) => (

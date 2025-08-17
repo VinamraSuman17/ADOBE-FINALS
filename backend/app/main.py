@@ -9,6 +9,9 @@ from pathlib import Path
 # Load environment variables
 load_dotenv()
 
+BASE_DIR = Path(__file__).resolve().parent.parent  # backend/
+STORAGE_DIR = BASE_DIR / "storage"
+
 app = FastAPI(
     title="Adobe Challenge - AI-Powered PDF Analysis with Preview",
     description="Advanced document intelligence with Gemini AI integration, cross-document insights, podcast generation, and PDF preview",
@@ -72,8 +75,9 @@ app.add_middleware(
 )
 
 # ✅ Mount static files
-app.mount("/audio", StaticFiles(directory="storage/audio"), name="audio")
-app.mount("/files", StaticFiles(directory="storage/pdfs"), name="files")
+app.mount("/audio", StaticFiles(directory=STORAGE_DIR / "audio"), name="audio")
+app.mount("/pdfs", StaticFiles(directory=STORAGE_DIR / "pdfs"), name="pdfs")
+app.mount("/temp", StaticFiles(directory=STORAGE_DIR / "temp"), name="temp")
 
 # Include API routes
 app.include_router(router, prefix="", tags=["Adobe Challenge - Deep AI"])

@@ -5,7 +5,7 @@ import Loader from "../common/Loader";
 import PDFPreviewModal from "../ui/PDFPreviewModal";
 import { toast } from "react-toastify";
 import { CgBulb } from "react-icons/cg";
-import PodcastMode from "./PodcastMode";
+import PodcastMode from "./PodcastMode.jsx";
 
 const UploadSection = ({
   onWorkflowComplete,
