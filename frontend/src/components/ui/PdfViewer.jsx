@@ -20,7 +20,6 @@ const NormalViewer = forwardRef(({ pdfFile }, ref) => {
           setTimeout(() => {
             try {
               apis.gotoLocation(pageNumber + 1);
-              console.log(`Navigating to page: ${pageNumber + 1}`);
             } catch (error) {
               console.error("Navigation error:", error);
             }
@@ -36,10 +35,8 @@ const NormalViewer = forwardRef(({ pdfFile }, ref) => {
   useEffect(() => {
     const checkSDK = () => {
       if (window.AdobeDC?.View) {
-        console.log("Adobe SDK loaded successfully");
         setIsSDKReady(true);
       } else {
-        console.log("Adobe SDK not ready yet");
       }
     };
 
@@ -47,7 +44,6 @@ const NormalViewer = forwardRef(({ pdfFile }, ref) => {
       checkSDK();
     } else {
       const handleSDKReady = () => {
-        console.log("Adobe SDK ready event fired");
         setIsSDKReady(true);
       };
 
@@ -60,11 +56,8 @@ const NormalViewer = forwardRef(({ pdfFile }, ref) => {
 
   // PDF viewer initialization
   useEffect(() => {
-    console.log("PDF File:", pdfFile);
-    console.log("SDK Ready:", isSDKReady);
 
     if (!isSDKReady || !pdfFile) {
-      console.log("Not ready to initialize viewer");
       return;
     }
 
@@ -86,16 +79,12 @@ const NormalViewer = forwardRef(({ pdfFile }, ref) => {
       container.innerHTML = "";
     }
 
-    console.log("Initializing Adobe DC View...");
-
     try {
       const adobeDCView = new window.AdobeDC.View({
         clientId: import.meta.env.VITE_ADOBE_API_KEY || "demo-client-id",
         divId: viewerId.current,
         parentDivId: containerDivId.current, // Important for proper context
       });
-
-      console.log("Adobe DC View created, loading PDF...");
 
       adobeDCView
         .previewFile(
@@ -116,18 +105,15 @@ const NormalViewer = forwardRef(({ pdfFile }, ref) => {
           }
         )
         .then((viewer) => {
-          console.log("PDF loaded successfully");
           viewerRef.current = viewer;
 
           // Optional: Add event listeners for better debugging
           viewer.getAPIs().then((apis) => {
-            console.log("APIs available:", Object.keys(apis));
             
             // Listen for page change events
             apis.registerCallback(
               window.AdobeDC.View.Enum.CallbackType.PAGE_CHANGED,
               (event) => {
-                console.log("Page changed to:", event.data.currentPage);
               }
             );
           }).catch((error) => {

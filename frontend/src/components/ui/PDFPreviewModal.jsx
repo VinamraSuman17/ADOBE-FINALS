@@ -37,7 +37,6 @@ const PDFPreviewModal = ({ snippet, isOpen, onClose }) => {
     setIsLoading(true);
     setError(null);
     try {
-      console.log(`🔍 Fetching PDF for: ${snippet.document_id}`);
 
       // Try metadata endpoint first
       let file = null;
@@ -68,7 +67,6 @@ const PDFPreviewModal = ({ snippet, isOpen, onClose }) => {
       }
 
       setPdfFile(file);
-      console.log(`✅ PDF ready: ${file.name}`);
       toast(`📖 Preview opened: ${file.name}`);
     } catch (err) {
       console.error("❌ PDF preview fetch failed:", err);

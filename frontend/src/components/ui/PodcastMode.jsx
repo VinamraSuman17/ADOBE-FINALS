@@ -76,8 +76,6 @@ const PodcastMode = ({ analysis, outline, isMultipleFiles, comparison }) => {
       content: `This concludes your analysis. Thank you for using our service.`,
       duration: 4
     })
-
-    console.log(`🎵 Generated ${script.length} sections:`, script.map(s => s.title))
     setPodcastScript(script)
     setTotalDuration(script.reduce((total, section) => total + section.duration, 0))
   }, [analysis, outline, isMultipleFiles, comparison])
@@ -90,7 +88,6 @@ const PodcastMode = ({ analysis, outline, isMultipleFiles, comparison }) => {
 
   // ✅ COMPLETELY REWRITTEN playSection with bulletproof progression
   const playSection = useCallback((sectionIndex) => {
-    console.log(`🎵 STARTING Section ${sectionIndex + 1}/${podcastScript.length}: ${podcastScript[sectionIndex]?.title}`)
     
     // ✅ Clear any existing timeouts
     if (sectionTimeoutRef.current) {
@@ -100,7 +97,6 @@ const PodcastMode = ({ analysis, outline, isMultipleFiles, comparison }) => {
     
     // ✅ Check if we've reached the end
     if (sectionIndex >= podcastScript.length) {
-      console.log("✅ ALL SECTIONS COMPLETED!")
       setIsPlaying(false)
       isPlayingRef.current = false
       setCurrentSection(0)
@@ -110,7 +106,6 @@ const PodcastMode = ({ analysis, outline, isMultipleFiles, comparison }) => {
 
     const section = podcastScript[sectionIndex]
     if (!section) {
-      console.log("❌ Section not found, stopping")
       setIsPlaying(false)
       isPlayingRef.current = false
       return
@@ -127,7 +122,6 @@ const PodcastMode = ({ analysis, outline, isMultipleFiles, comparison }) => {
     // ✅ Small delay to ensure speech synthesis is ready
     setTimeout(() => {
       if (!isPlayingRef.current) {
-        console.log("⏹️ Stopped before starting section")
         return
       }
 
@@ -139,12 +133,10 @@ const PodcastMode = ({ analysis, outline, isMultipleFiles, comparison }) => {
       let hasEnded = false
       
       utterance.onstart = () => {
-        console.log(`▶️ SPEECH STARTED: ${section.title}`)
         startProgressTracking(section.duration)
       }
 
       utterance.onend = () => {
-        console.log(`⏹️ SPEECH ENDED: ${section.title}`)
         if (hasEnded) return // Prevent double execution
         hasEnded = true
         
@@ -152,15 +144,12 @@ const PodcastMode = ({ analysis, outline, isMultipleFiles, comparison }) => {
         
         // ✅ Move to next section ONLY if still playing
         if (isPlayingRef.current && sectionIndex + 1 < podcastScript.length) {
-          console.log(`🔄 MOVING TO NEXT: Section ${sectionIndex + 2}`)
-          // Small delay before next section
           setTimeout(() => {
             if (isPlayingRef.current) {
               playSection(sectionIndex + 1)
             }
           }, 500)
         } else if (sectionIndex + 1 >= podcastScript.length) {
-          console.log("🎉 REACHED FINAL SECTION - COMPLETING")
           setIsPlaying(false)
           isPlayingRef.current = false
           setCurrentSection(0)
@@ -191,7 +180,6 @@ const PodcastMode = ({ analysis, outline, isMultipleFiles, comparison }) => {
       // ✅ ULTIMATE SAFETY NET: Force next section after timeout
       sectionTimeoutRef.current = setTimeout(() => {
         if (!hasEnded && isPlayingRef.current) {
-          console.log(`⚠️ TIMEOUT REACHED for ${section.title} - FORCING NEXT`)
           hasEnded = true
           clearInterval(progressInterval.current)
           
@@ -232,12 +220,8 @@ const PodcastMode = ({ analysis, outline, isMultipleFiles, comparison }) => {
 
   const playPodcast = () => {
     if (podcastScript.length === 0) {
-      console.log("❌ No podcast script available")
       return
     }
-
-    console.log(`🚀 STARTING PODCAST with ${podcastScript.length} sections`)
-    console.log("📝 Sections:", podcastScript.map((s, i) => `${i+1}. ${s.title}`))
     
     setIsPlaying(true)
     isPlayingRef.current = true // ✅ Set ref immediately
@@ -251,7 +235,6 @@ const PodcastMode = ({ analysis, outline, isMultipleFiles, comparison }) => {
   }
 
   const pausePodcast = () => {
-    console.log("⏸️ PAUSING PODCAST")
     setIsPlaying(false)
     isPlayingRef.current = false // ✅ Set ref immediately
     
@@ -266,7 +249,6 @@ const PodcastMode = ({ analysis, outline, isMultipleFiles, comparison }) => {
   }
 
   const resetPodcast = () => {
-    console.log("🔄 RESETTING PODCAST")
     pausePodcast()
     setCurrentTime(0)
     setCurrentSection(0)
@@ -274,7 +256,6 @@ const PodcastMode = ({ analysis, outline, isMultipleFiles, comparison }) => {
 
   const skipToNext = () => {
     if (currentSection + 1 < podcastScript.length) {
-      console.log(`⏭️ SKIPPING to section ${currentSection + 2}`)
       
       // Cancel current
       if (speechSynthesis.current.speaking) {

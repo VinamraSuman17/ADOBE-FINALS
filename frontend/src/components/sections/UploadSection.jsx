@@ -82,10 +82,6 @@ const UploadSection = ({
       const data = await response.json();
       setPriorDocuments(Array.from(files));
       setDocumentsWithIds(data.documents_with_ids || []); // ✅ Store documents with IDs
-
-      console.log(
-        `✅ Uploaded ${data.documents_processed} prior documents with unique IDs`
-      );
       toast(
         `Successfully uploaded ${data.documents_processed} prior documents for AI analysis with preview enabled!`
       );
@@ -133,7 +129,6 @@ const UploadSection = ({
       const data = await response.json();
       setCurrentDocument(file);
 
-      console.log(`✅ Current document uploaded: ${data.filename}`);
       toast(
         "Current document ready! Now select text for deep AI-powered insights."
       );
@@ -155,7 +150,6 @@ const UploadSection = ({
       return;
     }
 
-    console.log("📝 Text selected for deep analysis:", selectionData);
     setSelectedText(selectionData);
     setAnalysisLoading(true);
     setIsDeepAiAnalysisLoading(true);
@@ -166,7 +160,6 @@ const UploadSection = ({
       formData.append("page_number", selectionData.page.toString());
       formData.append("user_session_id", sessionId);
 
-      console.log("🤖 Requesting DEEP AI analysis...");
       const response = await fetch("http://localhost:8080/analyze-selection/", {
         method: "POST",
         body: formData,
@@ -179,7 +172,6 @@ const UploadSection = ({
       const results = await response.json();
       setAnalysisResults(results);
 
-      console.log("✅ Deep AI analysis completed:", results);
       toast(
         `🤖 Deep AI insights generated! Found ${
           results.metadata?.total_insights || 0
@@ -215,7 +207,6 @@ const UploadSection = ({
     setIsPodcastGenerating(true);
 
     try {
-      console.log("🎧 Generating DEEP AI-enhanced podcast...");
 
       const response = await fetch("http://localhost:8080/generate-podcast/", {
         method: "POST",
@@ -236,13 +227,8 @@ const UploadSection = ({
       }
 
       const podcastResult = await response.json();
-      console.log(podcastResult);
       if (podcastResult.success) {
         setPodcastData(podcastResult.podcast);
-        console.log(
-          "✅ Deep AI-enhanced podcast generated:",
-          podcastResult.podcast
-        );
         toast(
           "🎧 Deep AI-enhanced podcast ready! Advanced insights in audio format."
         );
@@ -273,12 +259,10 @@ const UploadSection = ({
           if (playPromise !== undefined) {
             playPromise
               .then(() => {
-                console.log("✅ Audio playback started");
                 setIsPodcastPlaying(true);
               })
               .catch((error) => {
                 console.error("❌ Audio playback failed:", error);
-                toast("Audio playback failed. Please try again.");
                 setIsPodcastPlaying(false);
               });
           }
@@ -308,13 +292,11 @@ const UploadSection = ({
 
   const handleAudioError = (e) => {
     console.error("❌ Audio error:", e);
-    toast("Audio playback error. Please try regenerating the podcast.");
     setIsPodcastPlaying(false);
   };
 
   // Navigate to snippet location
   const navigateToSnippet = (snippet) => {
-    console.log("🔗 Navigating to:", snippet);
     if (pdfViewerRef.current?.navigateToPage && snippet.page) {
       pdfViewerRef.current.navigateToPage(snippet.page - 1);
     }
@@ -324,12 +306,6 @@ const UploadSection = ({
   const handlePDFPreview = (snippet) => {
     if (snippet.document_id) {
       setPreviewModal({ isOpen: true, snippet });
-      console.log(
-        "👁️ Opening PDF preview for:",
-        snippet.document_name,
-        "at page",
-        snippet.page
-      );
     } else {
       toast("PDF preview not available for this document");
     }
@@ -775,21 +751,13 @@ const UploadSection = ({
           {/* RIGHT COLUMN - PDF Viewer & Results */}
           <div className="space-y-6">
             {currentDocument && (
-              <div className="bg-gray-800 rounded-lg p-4 border border-gray-700">
-                <h3 className="text-xl font-bold text-white mb-4 flex items-center space-x-2">
-                  <span>Current Document Viewer</span>
-                  <div className="px-2 py-1 bg-blue-600/20 rounded border border-blue-500/30">
-                    <span className="text-xs text-blue-300">AI Ready</span>
-                  </div>
-                </h3>
-                <div className="min-h-[600px] bg-gray-900 rounded-lg">
+              <div className="min-h-[600px] bg-gray-900">
                   <AdobePdfViewer
                     ref={pdfViewerRef}
                     pdfFile={currentDocument}
                     onTextSelection={handleTextSelection}
                   />
                 </div>
-              </div>
             )}
 
             {analysisResults && (
