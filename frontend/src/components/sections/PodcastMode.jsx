@@ -32,7 +32,7 @@ const PodcastMode = ({ analysis, outline, isMultipleFiles, comparison }) => {
     if (isMultipleFiles && comparison) {
       script.push({
         title: "Introduction",
-        content: `Welcome to your comprehensive document analysis. Today we're analyzing ${comparison.total_files || 'multiple'} documents.`,
+        content: `Welcome to your comprehensive document analysis. Today we're analyzing ${comparison || 'multiple'} documents.`,
         duration: 4
       })
 
@@ -42,7 +42,7 @@ const PodcastMode = ({ analysis, outline, isMultipleFiles, comparison }) => {
         duration: 5
       })
 
-      if (comparison.common_themes && comparison.common_themes.length > 0) {
+      if (comparison && comparison > 0) {
         script.push({
           title: "Common Themes",
           content: `Key themes identified: ${comparison}.`,
@@ -62,23 +62,10 @@ const PodcastMode = ({ analysis, outline, isMultipleFiles, comparison }) => {
         duration: 20
       })
 
-      // ✅ Add ALL sections from outline
-      const sectionsToProcess = outline || []
-      
-      if (sectionsToProcess.length > 0) {
-        sectionsToProcess.forEach((section, index) => {
-          script.push({
-            title: `Section ${index + 1}`,
-            content: `Section ${index + 1}: ${section.text}. This appears on page ${section.page}.`,
-            duration: 5
-          })
-        })
-      }
-
-      if (analysis?.insights?.insights && analysis.insights.insights.length > 0) {
+      if (analysis && analysis > 0) {
         script.push({
           title: "Key Insights",
-          content: `Key insights: ${analysis.insights.insights[0]}.`,
+          content: `Key insights: ${analysis}.`,
           duration: 6
         })
       }
