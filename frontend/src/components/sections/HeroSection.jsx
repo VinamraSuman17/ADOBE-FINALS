@@ -66,7 +66,7 @@ const HeroSection = () => {
       id="home"
       className="min-h-screen mt-16 flex items-center justify-center px-4 bg-black overflow-hidden pt-12 pb-6"
     >
-      <div className="dark:bg-neutral-800 absolute top-12 scale-110 w-[90vw] h-screen opacity-27 translate-y-10">
+      <div className="dark:bg-neutral-800 absolute top-12 scale-110 w-[90vw] h-screen opacity-45 translate-y-10">
         <ThreeDMarquee images={images} />
       </div>
       <div className="max-w-6xl mx-auto text-center z-10">
@@ -78,7 +78,7 @@ const HeroSection = () => {
             </div>
           </h1>
 
-          <p className="text-xl md:text-2xl text-gray-300 max-w-3xl mx-auto leading-relaxed">
+          <p className="text-xl md:text-2xl text-gray-300 max-w-3xl mx-auto leading-relaxed font-['Raleway'] font-semibold">
             Advanced artificial intelligence technology for comprehensive
             document analysis and content extraction. Professional-grade
             insights tailored to your specific requirements and use cases.

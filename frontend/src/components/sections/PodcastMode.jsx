@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react'
 import { Play, Pause, RotateCcw, Volume2, Clock, SkipForward } from 'lucide-react'
 
+
 const PodcastMode = ({ analysis, outline, isMultipleFiles, comparison }) => {
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
