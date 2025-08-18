@@ -527,17 +527,17 @@ const AdobePdfViewer = forwardRef(
           style={{ position: 'relative' }}
         >
           {/* Enhanced Header */}
-          <div className="bg-gradient-to-r from-slate-800 to-gray-800 px-6 py-4 border-b border-slate-700/50">
+          <div className="bg-gradient-to-r from-slate-800 to-gray-800 px-6 py-2 border-b border-slate-700/50">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
                 <div className="flex items-center space-x-3">
                   <div className="p-2 bg-red-500 rounded-lg">
-                    <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
                       <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
                     </svg>
                   </div>
                   <div>
-                    <h3 className="text-xl font-bold text-white">
+                    <h3 className="text-md font-bold text-white">
                       {typeof pdfFile === 'string' ? 'Remote PDF' : pdfFile?.name || 'No file selected'}
                     </h3>
                   </div>
@@ -614,17 +614,6 @@ const AdobePdfViewer = forwardRef(
                     +
                   </button>
                 </div>
-
-                {/* Manual Zoom Toggle */}
-                {!manualZoomMode && (
-                  <button
-                    onClick={() => ref.current?.enableManualZoom()}
-                    className="px-3 py-2 bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 text-xs rounded border border-purple-500/30 transition-colors"
-                    title="Switch to Manual Zoom"
-                  >
-                    Manual
-                  </button>
-                )}
               </div>
             </div>
           </div>

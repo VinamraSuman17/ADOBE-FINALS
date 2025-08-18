@@ -84,7 +84,7 @@ const FeaturesSection = () => {
               </div>
             </div>
             <div className="text-center">
-              <div className="text-6xl text-gray-700 mb-4">⚙️</div>
+              <div className="text-[120px] text-gray-700 mb-4 animate-spin [animation-duration:18s]">⚙️</div>
               <p className="text-gray-400">Professional Grade System</p>
             </div>
           </div>
