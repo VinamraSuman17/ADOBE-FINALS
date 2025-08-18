@@ -166,68 +166,97 @@ async def generate_gemini_insights(selected_text: str, relevant_snippets: List[d
         
         # Create ADVANCED prompt for deeper analysis
         enhanced_prompt = f"""
-        You have been given a text selection from a current document and related excerpts from a user's personal document library. Your task is to provide EXTRAORDINARY, DEEP, and ACTIONABLE insights that go far beyond surface-level analysis.
+       ROLE
+        You are an elite research analyst synthesizing a selected text from a current document with related excerpts from a personal document library. Produce extraordinary, deep, and actionable insights that go far beyond surface‑level analysis. Do not mention any model or tool. Do not output JSON.
 
-        🎯 SELECTED TEXT TO ANALYZE:
+        INPUTS
+
+        SELECTED TEXT:
         "{selected_text}"
 
-        📚 RELATED DOCUMENT CONTEXT:
+        RELATED DOCUMENT CONTEXT (JSON):
         {json.dumps(context_analysis, indent=2)}
 
-        🧠 ANALYSIS REQUIREMENTS:
-        Provide a comprehensive, intelligent analysis that includes:
+        OBJECTIVE
+        Deliver a single, cohesive plain‑text response (not JSON, not bullet‑only) that weaves together deep conceptual analysis, cross‑document synthesis, and strategic foresight. The output must read as a polished narrative memo with embedded, specific evidence references (document titles, sections, dates, page numbers if available).
 
-        1. **DEEP CONCEPTUAL CONNECTIONS**: Not just keywords, but underlying themes, principles, and paradigms
-        2. **CROSS-DISCIPLINARY INSIGHTS**: How this concept relates to different fields/domains found in the documents
-        3. **EVOLUTIONARY PATTERNS**: How ideas have developed/changed across the document timeline
-        4. **STRATEGIC IMPLICATIONS**: What this means for decision-making and future actions
-        5. **HIDDEN RELATIONSHIPS**: Non-obvious connections that only AI can discover
-        6. **CONTEXTUAL SIGNIFICANCE**: Why this text matters in the broader knowledge landscape
+        MANDATORY ANALYSIS DIMENSIONS
+        Cover all of the following, integrating them smoothly into one flowing narrative (not separate headers unless helpful for clarity):
 
-        📋 REQUIRED JSON OUTPUT FORMAT:
-        {{
-            "deep_similarities": [
-                "Advanced conceptual alignments with specific document evidence and deeper meaning analysis"
-            ],
-            "strategic_contradictions": [
-                "Fundamental disagreements or paradigm conflicts with detailed analysis of implications"
-            ],
-            "evolutionary_variations": [
-                "How approaches have evolved or differ across documents with timeline/context analysis"
-            ],
-            "critical_limitations": [
-                "Significant constraints, gaps, or challenges identified with impact assessment"
-            ],
-            "powerful_examples": [
-                "Compelling case studies, evidence, or illustrations with detailed context and outcomes"
-            ],
-            "breakthrough_connections": [
-                "Revolutionary or non-obvious links between concepts across documents that reveal new insights"
-            ],
-            "strategic_insights": [
-                "High-value, actionable intelligence that can drive decisions or deeper understanding"
-            ],
-            "knowledge_synthesis": [
-                "Meta-insights about how all these documents work together to create understanding"
-            ]
-        }}
+        Deep conceptual connections: Extract underlying themes, principles, causal mechanisms, and paradigms (not just overlapping keywords). Explain why these concepts matter and how they operate.
 
-        🎯 ANALYSIS STANDARDS:
-        - Each insight should be 2-4 sentences with specific details
-        - Include document names and evidence where relevant
-        - Focus on WHY and HOW, not just WHAT
-        - Provide actionable intelligence, not just descriptions
-        - Reveal patterns that humans might miss
-        - Connect abstract concepts to concrete implications
-        - Demonstrate deep understanding of subject matter
-        - Show relationship between ideas across documents
+        Cross‑disciplinary insights: Map ideas to adjacent domains present in the library (e.g., strategy, design, economics, systems, policy, engineering, behavioral science). Show transferability and constraints.
 
-        🚀 MAKE IT EXTRAORDINARY:
-        - Go beyond obvious connections
-        - Provide insights that make the user say "I never thought of it that way!"
-        - Connect micro-details to macro-implications
-        - Reveal the hidden narrative across documents
-        - Provide strategic foresight based on patterns
+        Evolutionary patterns: Trace how ideas evolved across time in the documents (earliest to latest). Identify shifts in assumptions, metrics, methods, scope, and maturity; explain drivers of change.
+
+        Strategic implications: Translate insights into decision choices, trade‑offs, risks, and opportunities. Specify recommended actions, owner roles, sequencing, and measurable signals to monitor.
+
+        Hidden relationships: Surface non‑obvious links (shared causal factors, common failure modes, tacit assumptions, second‑order effects). Justify with evidence.
+
+        Contextual significance: Situate the selected text within the broader knowledge landscape of the library. Clarify what is genuinely novel vs. reiterative; state the marginal contribution.
+
+        OUTPUT FORMAT (STRICT)
+
+        One single plain‑text response (no JSON, no code blocks).
+
+        Write as a clear, concise analytical memo with short paragraphs.
+
+        Every insight must be 2–4 sentences, specific and evidence‑grounded.
+
+        Explicitly reference sources inline: “(Doc: <title or id>, section/page/date if available)”.
+
+        Include these eight sections as bolded inline labels within the narrative, in this order, but keep the prose continuous (avoid list dumps):
+
+        Deep similarities
+
+        Strategic contradictions
+
+        Evolutionary variations
+
+        Critical limitations
+
+        Powerful examples
+
+        Breakthrough connections
+
+        Strategic insights
+
+        Knowledge synthesis
+
+        EVIDENCE & RIGOR REQUIREMENTS
+
+        For each section above, include at least 2 distinct, concrete references to documents from the provided context.
+
+        When making claims, tie them to direct passages, data points, or figures where possible.
+
+        Prefer causal explanations (“because,” “therefore,” “driven by”) over descriptive summaries.
+
+        Translate abstract concepts into operational implications (metrics, thresholds, timelines, owners).
+
+        If the context is sparse or conflicting, state uncertainty explicitly and show how to resolve it (what to read/measure next).
+
+        STYLE & TONE
+
+        Executive, lucid, and incisive. No fluff. No marketing language.
+
+        Confident, evidence‑led assertions; avoid hedging except to flag genuine uncertainty.
+
+        Avoid enumerated lists unless essential; prefer tight paragraphs.
+
+        Do not mention or imply any underlying AI system, tools, chain‑of‑thought, or hidden steps.
+
+        DO not use **
+
+        QUALITY BAR (PASS/FAIL)
+
+        Pass only if every section label is present, integrated, and supported by specific document evidence; if any section lacks evidence or actionable implications, revise internally before output.
+
+        The memo must reveal at least one non‑obvious, high‑leverage insight that would plausibly change a decision or prioritization path.
+
+        The memo must end with a short, decisive closing paragraph that states the single most important next decision and the leading indicator to watch.
+
+        BEGIN ANALYSIS NOW
+        Read the selected text and the related document context carefully. Synthesize, reason, and produce the final memo as a single plain‑text response that fully satisfies all requirements above.
         """
         
         print(f"🤖 Generating DEEP Gemini 2.5 Flash insights for: '{selected_text[:60]}...'")
