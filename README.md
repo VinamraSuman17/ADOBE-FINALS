@@ -115,14 +115,15 @@ We tested **Adobe PDF Embed API’s `goToLocation` method** for navigation.
 ## Docker Setup & Commands
 
 ### Build the Image
-
+```bash
 docker build --platform linux/amd64 -t yourimageidentifier .
-
+```
 
 Run the Container
 
 
 Linux/macOS
+```bash
 docker run -v /path/to/credentials:/credentials \
   -e ADOBE_EMBED_API_KEY="enter-your-adobe-api-key-here" \
   -e GEMINI_API_KEY="enter-your-gemini-api-key-here" \
@@ -131,8 +132,10 @@ docker run -v /path/to/credentials:/credentials \
   -e GEMINI_MODEL="gemini-2.5-flash" \
   -e TTS_PROVIDER="gemini" \
   -p 8080:8080 yourimageidentifier
+```
 
 Windows (PowerShell)
+```bash
 docker run -v "C:\Users\User\OneDrive\Desktop\Adobe:/credentials" `
   -e ADOBE_EMBED_API_KEY="enter-your-adobe-api-key-here" `
   -e GEMINI_API_KEY="enter-your-gemini-api-key-here" `
@@ -141,13 +144,31 @@ docker run -v "C:\Users\User\OneDrive\Desktop\Adobe:/credentials" `
   -e GEMINI_MODEL="gemini-2.5-flash" `
   -e TTS_PROVIDER="gemini" `
   -p 8080:8080 yourimageidentifier
+```
 
 Frontend Setup
+```bash
 cd frontend
 npm install
 npm run dev
-
+```
 
 Backend: http://localhost:8080
 
 Frontend: http://localhost:5173
+
+## Our Ideation Process: From Notes to Code
+
+Our entire algorithm is a direct result of the manual brainstorming and mind-mapping process. Below are the actual notes and diagrams we created during our planning phase, which formed the foundation of our code's logic.
+
+<p align="center">
+  <img src="https://res.cloudinary.com/dcyxnil16/image/upload/v1755545971/IMG-20250819-WA0003_zwkscj.jpg" alt="Brainstorm Note 1" height="500px"/>
+  <img src="https://res.cloudinary.com/dcyxnil16/image/upload/v1755545971/IMG-20250819-WA0006_zozfm7.jpg" alt="Brainstorm Note 2" height="500px" />
+</p>
+<p align="center">
+  <img src="https://res.cloudinary.com/dcyxnil16/image/upload/v1755545971/IMG-20250819-WA0004_xjxzra.jpg" alt="Brainstorm Note 1" height="500px"/>
+  <img src="https://res.cloudinary.com/dcyxnil16/image/upload/v1755545971/IMG-20250819-WA0004_xjxzra.jpg" alt="Brainstorm Note 1" height="500px"/>
+  <img src="https://res.cloudinary.com/dcyxnil16/image/upload/v1755545971/IMG-20250819-WA0005_zv66im.jpg" alt="Brainstorm Note 1" height="500px"/>
+</p>
+Caption: The step-by-step logic we drafted before writing the final code.
+
