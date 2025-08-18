@@ -117,7 +117,11 @@ We tested **Adobe PDF Embed API’s `goToLocation` method** for navigation.
 ### Build the Image
 
 docker build --platform linux/amd64 -t yourimageidentifier .
+
+
 Run the Container
+
+
 Linux/macOS
 docker run -v /path/to/credentials:/credentials \
   -e ADOBE_EMBED_API_KEY="enter-your-adobe-api-key-here" \
