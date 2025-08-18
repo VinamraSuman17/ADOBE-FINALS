@@ -13,7 +13,7 @@ import {
   Zap
 } from 'lucide-react'
 import InsightsBulb from '../ui/InsightsBulb'
-import PodcastMode from '../ui/PodcastMode'
+import PodcastMode from "./PodcastMode.jsx";
 import HighlightedSections from '../ui/HighlightedSections'
 
 const ResultsSection = ({ data }) => {
