@@ -184,7 +184,7 @@ AZURE_TTS_VOICE=
 ```
 
 ### Frontend `.env`
-
+- (**Very Important**: Must make this .env file for frontend to work. Backend might work without .env with docker)
 ``` bash
 VITE_ADOBE_API_KEY=
 ```
