@@ -182,6 +182,8 @@ AZURE_TTS_API_VERSION=
 AZURE_TTS_VOICE=
 ```
 
+### Our Adobe Embedded API key for frontend and backend = b8b15fad536f4b8f81da542639fe452a (If you need this)
+
 ### Frontend `.env`
 - (**Very Important**: Must make this .env file for frontend to work. Backend might work without .env with docker)
 ``` bash
