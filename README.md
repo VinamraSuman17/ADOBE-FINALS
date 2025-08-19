@@ -20,7 +20,6 @@ This is more than a viewer: it understands structure, connects related ideas acr
 ---
 
 ## Why This Solution Stands Out
-Most hackathon projects demonstrate a single feature. Our system demonstrates a **full architecture** that blends rule-based intelligence, semantic retrieval, and large language models in harmony:
 
 ### Hybrid Intelligence
 - Rule‑based (from 1A): Deterministic, lightning‑fast heading extraction and page mapping using font features, patterns, and positional heuristics—no ML required for structure.
