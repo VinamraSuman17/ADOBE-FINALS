@@ -7,7 +7,7 @@ from uuid import uuid4
 from pathlib import Path
 from datetime import datetime
 import hashlib
-
+from openai import AzureOpenAI
 import os
 from typing import List
 from datetime import datetime
@@ -15,12 +15,12 @@ import numpy as np
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
-# ✅ Gemini AI Integration
+# Gemini AI Integration
 import google.generativeai as genai
 from dotenv import load_dotenv
 import asyncio
 
-# ✅ Audio generation imports
+# Audio generation imports
 import tempfile
 import subprocess
 from pathlib import Path
@@ -33,11 +33,11 @@ try:
     gemini_api_key = os.environ.get("GEMINI_API_KEY")
     if gemini_api_key:
         genai.configure(api_key=gemini_api_key)
-        print("✅ Gemini AI configured successfully")
+        print("Gemini AI configured successfully")
     else:
-        print("⚠️ GEMINI_API_KEY not found in environment")
+        print("GEMINI_API_KEY not found in environment")
 except Exception as e:
-    print(f"❌ Gemini configuration failed: {e}")
+    print(f"Gemini configuration failed: {e}")
 
 router = APIRouter()
 
@@ -47,7 +47,7 @@ SESSION_STORAGE = {}
 def store_session_data(session_id: str, data: dict):
     """Store session data in memory with enhanced logging"""
     SESSION_STORAGE[session_id] = data
-    print(f"📝 ✅ STORED session data for {session_id}")
+    print(f"📝 STORED session data for {session_id}")
     print(f"📊 Prior docs count: {len(data.get('prior_documents', []))}")
     print(f"📂 Total sessions now: {len(SESSION_STORAGE)}")
     
@@ -60,7 +60,7 @@ def store_session_data(session_id: str, data: dict):
 def get_session_data(session_id: str) -> dict:
     """Retrieve session data from memory with enhanced logging"""
     data = SESSION_STORAGE.get(session_id, {})
-    print(f"📖 ✅ RETRIEVED session data for {session_id}")
+    print(f"📖 RETRIEVED session data for {session_id}")
     print(f"📊 Prior docs found: {len(data.get('prior_documents', []))}")
     
     if data.get('prior_documents'):
@@ -104,11 +104,11 @@ def create_document_embeddings(content: bytes, outline: dict) -> dict:
                     "vector": create_simple_vector(section_text)  # Placeholder
                 }
         
-        print(f"✅ Created {len(embeddings)} embeddings for document sections")
+        print(f"Created {len(embeddings)} embeddings for document sections")
         return embeddings
         
     except Exception as e:
-        print(f"❌ Error creating embeddings: {e}")
+        print(f"Error creating embeddings: {e}")
         return {}
 
 def extract_text_from_bytes(content: bytes) -> str:
@@ -136,7 +136,7 @@ def create_simple_vector(text: str) -> list:
     vector = [len(words), len(set(words)), text.count(' ')]
     return vector + [0] * (100 - len(vector))  # Pad to fixed size
 
-# ✅ ENHANCED GEMINI AI INSIGHTS GENERATION WITH GEMINI 2.5 FLASH
+# ENHANCED GEMINI AI INSIGHTS GENERATION WITH GEMINI 2.5 FLASH
 async def generate_gemini_insights(selected_text: str, relevant_snippets: List[dict]) -> dict:
     """
     Generate DEEP, INTELLIGENT insights using Gemini 2.5 Flash with enhanced prompting
@@ -268,7 +268,7 @@ async def generate_gemini_insights(selected_text: str, relevant_snippets: List[d
             try:
                 response = model.generate_content(enhanced_prompt)
                 
-                # ✅ FIXED: Handle new Gemini 2.5 Flash response format
+                # FIXED: Handle new Gemini 2.5 Flash response format
                 response_text = ""
                 if hasattr(response, 'text'):
                     response_text = response.text
@@ -283,27 +283,27 @@ async def generate_gemini_insights(selected_text: str, relevant_snippets: List[d
                     # Try to parse as JSON
                     try:
                         insights = json.loads(response_text)
-                        print(f"✅ Deep Gemini 2.5 Flash insights generated successfully (attempt {attempt + 1})")
+                        print(f"Deep Gemini 2.5 Flash insights generated successfully (attempt {attempt + 1})")
                         
                         # Validate that we have meaningful insights
                         total_insights = sum(len(v) for v in insights.values() if isinstance(v, list))
                         if total_insights > 5:  # Ensure we have substantial content
                             return insights
                         else:
-                            print(f"⚠️ Insights too shallow, retrying... (attempt {attempt + 1})")
+                            print(f"Insights too shallow, retrying... (attempt {attempt + 1})")
                             continue
                             
                     except json.JSONDecodeError:
-                        print(f"⚠️ JSON parsing failed on attempt {attempt + 1}, extracting from text...")
+                        print(f"JSON parsing failed on attempt {attempt + 1}, extracting from text...")
                         insights = extract_enhanced_insights_from_text(response_text, selected_text)
                         if insights:
                             return insights
                         
                 else:
-                    print(f"⚠️ Response too short on attempt {attempt + 1}")
+                    print(f"Response too short on attempt {attempt + 1}")
                     
             except Exception as e:
-                print(f"⚠️ Gemini 2.5 Flash API error on attempt {attempt + 1}: {e}")
+                print(f"Gemini 2.5 Flash API error on attempt {attempt + 1}: {e}")
                 if attempt < max_retries - 1:
                     await asyncio.sleep(2)  # Wait before retry
                     continue
@@ -313,7 +313,7 @@ async def generate_gemini_insights(selected_text: str, relevant_snippets: List[d
         return generate_enhanced_fallback_insights(selected_text, relevant_snippets)
         
     except Exception as e:
-        print(f"❌ Critical error in Gemini 2.5 Flash insights generation: {e}")
+        print(f"Critical error in Gemini 2.5 Flash insights generation: {e}")
         return generate_enhanced_fallback_insights(selected_text, relevant_snippets)
 
 def extract_enhanced_insights_from_text(gemini_text: str, selected_text: str) -> dict:
@@ -599,23 +599,23 @@ def create_enhanced_mp3(file_path: Path, script: str):
             f.write(mp3_content)
         
         file_size = file_path.stat().st_size
-        print(f"✅ Enhanced MP3 created: {file_size} bytes")
+        print(f"Enhanced MP3 created: {file_size} bytes")
         
         # Verify it's a reasonable size
         if file_size < 5000:  # If still too small, pad it more
             with open(file_path, 'ab') as f:
                 f.write(b'\x00' * (10000 - file_size))  # Pad to 10KB minimum
-            print(f"✅ Padded MP3 to {file_path.stat().st_size} bytes")
+            print(f"Padded MP3 to {file_path.stat().st_size} bytes")
         
     except Exception as e:
-        print(f"❌ Enhanced MP3 creation failed: {e}")
+        print(f"Enhanced MP3 creation failed: {e}")
         # Last resort - create basic file
         with open(file_path, 'wb') as f:
             f.write(b'ID3\x03\x00\x00\x00\x00\x00\x00' + b'\x00' * 10000)
 
 # Adobe Challenge Endpoints
 
-# ✅ FIXED INGEST-PRIOR-DOCUMENTS FUNCTION
+# FIXED INGEST-PRIOR-DOCUMENTS FUNCTION
 @router.post("/ingest-prior-documents/")
 async def ingest_prior_documents(
     files: List[UploadFile],
@@ -643,13 +643,13 @@ async def ingest_prior_documents(
         extractor = ProperPDFExtractor()
         processed_count = 0
 
-        # ✅ Create unique storage directory for PDFs
+        # Create unique storage directory for PDFs
         pdf_storage_dir = Path("storage/pdfs")
         pdf_storage_dir.mkdir(parents=True, exist_ok=True)
 
         for idx, file in enumerate(files):
             if not file.filename.endswith('.pdf'):
-                print(f"⚠️ Skipping non-PDF file: {file.filename}")
+                print(f"Skipping non-PDF file: {file.filename}")
                 continue
 
             try:
@@ -659,14 +659,14 @@ async def ingest_prior_documents(
                 content = await file.read()
                 file_hash = hashlib.sha256(content).hexdigest()
 
-                # ✅ Generate unique PDF ID - FIXED!
+                # Generate unique PDF ID - FIXED!
                 unique_pdf_id = str(uuid4())
                 print(f"🆔 Generated unique ID: {unique_pdf_id}")
 
                 # Extract document structure
                 outline = extractor.extract_outline(content)
 
-                # ✅ Store PDF with unique filename - FIXED!
+                # Store PDF with unique filename - FIXED!
                 unique_filename = f"{unique_pdf_id}.pdf"
                 pdf_file_path = pdf_storage_dir / unique_filename
 
@@ -679,13 +679,13 @@ async def ingest_prior_documents(
                 # Create document embeddings for semantic search
                 doc_embeddings = create_document_embeddings(content, outline)
 
-                # ✅ Store enhanced document data with unique ID - FIXED!
+                # Store enhanced document data with unique ID - FIXED!
                 doc_data = {
-                    "unique_id": unique_pdf_id,  # ✅ FIXED: Proper UUID
-                    "original_filename": file.filename,  # ✅ FIXED: Original name
-                    "stored_filename": unique_filename,  # ✅ FIXED: Stored name
-                    "file_path": str(pdf_file_path),  # ✅ FIXED: Full file path
-                    "access_url": f"/files/{unique_filename}",  # ✅ FIXED: Access URL
+                    "unique_id": unique_pdf_id,  # FIXED: Proper UUID
+                    "original_filename": file.filename,  # FIXED: Original name
+                    "stored_filename": unique_filename,  # FIXED: Stored name
+                    "file_path": str(pdf_file_path),  # FIXED: Full file path
+                    "access_url": f"/files/{unique_filename}",  # FIXED: Access URL
                     "file_hash": file_hash,
                     "upload_timestamp": datetime.utcnow().isoformat(),
                     "content_size": len(content),
@@ -703,20 +703,20 @@ async def ingest_prior_documents(
                 session_data["total_sections"] += doc_data["total_sections"]
                 processed_count += 1
 
-                print(f"✅ Processed {file.filename} -> ID: {unique_pdf_id}")
+                print(f"Processed {file.filename} -> ID: {unique_pdf_id}")
 
             except Exception as e:
-                print(f"❌ Failed to process {file.filename}: {e}")
+                print(f"Failed to process {file.filename}: {e}")
                 # Continue processing other files
                 continue
 
         if processed_count == 0:
             raise HTTPException(status_code=400, detail="No valid PDF files were processed")
 
-        # ✅ Store session data - FIXED!
+        # Store session data - FIXED!
         store_session_data(user_session_id, session_data)
         
-        print(f"✅ Session data stored successfully for {user_session_id}")
+        print(f"Session data stored successfully for {user_session_id}")
 
         return {
             "success": True,
@@ -736,7 +736,7 @@ async def ingest_prior_documents(
         }
 
     except Exception as e:
-        print(f"❌ Prior documents ingestion failed: {str(e)}")
+        print(f"Prior documents ingestion failed: {str(e)}")
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Ingestion failed: {str(e)}")
@@ -783,7 +783,7 @@ async def set_current_document(
         # Update session storage
         store_session_data(user_session_id, session_data)
         
-        print(f"✅ Current document set: {file.filename} with {len(outline.get('outline', []))} sections")
+        print(f"Current document set: {file.filename} with {len(outline.get('outline', []))} sections")
         
         return {
             "success": True,
@@ -795,7 +795,7 @@ async def set_current_document(
         }
         
     except Exception as e:
-        print(f"❌ Current document upload failed: {str(e)}")
+        print(f"Current document upload failed: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Current document upload failed: {str(e)}")
 
 @router.post("/analyze-selection/")
@@ -888,12 +888,12 @@ async def analyze_text_selection(
         session_data["analysis_history"].append(analysis_result)
         store_session_data(user_session_id, session_data)
         
-        print(f"✅ Deep Gemini 2.5 Flash analysis completed: {analysis_result['metadata']['total_insights']} total insights generated")
+        print(f"Deep Gemini 2.5 Flash analysis completed: {analysis_result['metadata']['total_insights']} total insights generated")
         
         return analysis_result
         
     except Exception as e:
-        print(f"❌ Enhanced selection analysis failed: {str(e)}")
+        print(f"Enhanced selection analysis failed: {str(e)}")
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Enhanced analysis failed: {str(e)}")
@@ -908,9 +908,9 @@ def retrieve_from_prior_documents(selection_text: str, prior_docs: List[dict], t
 
     try:
         for doc_idx, doc in enumerate(prior_docs):
-            # ✅ CRITICAL FIX: Use correct field names
+            # CRITICAL FIX: Use correct field names
             doc_filename = doc.get("original_filename", f"Document_{doc_idx}")
-            doc_unique_id = doc.get("unique_id", f"doc_{doc_idx}")  # ✅ Use unique_id
+            doc_unique_id = doc.get("unique_id", f"doc_{doc_idx}")  # Use unique_id
             outline = doc.get("outline", {})
 
             # Search through document sections
@@ -929,8 +929,8 @@ def retrieve_from_prior_documents(selection_text: str, prior_docs: List[dict], t
                 if combined_score > 0.1:
                     snippet = {
                         "document_name": doc_filename,
-                        "document_id": doc_unique_id,    # ✅ CRITICAL: Use unique_id
-                        "unique_id": doc_unique_id,      # ✅ CRITICAL: For PDF preview
+                        "document_id": doc_unique_id,    # CRITICAL: Use unique_id
+                        "unique_id": doc_unique_id,      # CRITICAL: For PDF preview
                         "section_text": section_text,
                         "page": section.get("page", 1),
                         "section_level": section.get("level", 1),
@@ -946,7 +946,7 @@ def retrieve_from_prior_documents(selection_text: str, prior_docs: List[dict], t
         relevant_snippets.sort(key=lambda x: x["similarity_score"], reverse=True)
         top_snippets = relevant_snippets[:top_k]
         
-        # ✅ DEBUG LOG  
+        # DEBUG LOG  
         print(f"📊 Found {len(top_snippets)} snippets with unique IDs:")
         for s in top_snippets[:3]:
             print(f"  - {s['document_name']} (ID: {s['unique_id']}) - {s['similarity_score']:.3f}")
@@ -954,10 +954,9 @@ def retrieve_from_prior_documents(selection_text: str, prior_docs: List[dict], t
         return top_snippets
 
     except Exception as e:
-        print(f"❌ Retrieval error: {e}")
+        print(f"Retrieval error: {e}")
         return []
 
-# ✅ ENHANCED PODCAST GENERATION WITH GEMINI 2.5 FLASH
 @router.post("/generate-podcast/")
 async def generate_podcast(request: dict):
     try:
@@ -981,7 +980,6 @@ async def generate_podcast(request: dict):
 
         # --- Generate podcast script (summary only, no branding) ---
         podcast_script = await generate_podcast_summary(selected_text, analysis_data)
-        print('vinamra chu')
         # --- Generate audio from script ---
         audio_data = await generate_podcast_audio(podcast_script, session_id)
 
@@ -1007,7 +1005,7 @@ async def generate_podcast(request: dict):
         session_data.setdefault("podcasts", []).append(podcast_result)
         store_session_data(session_id, session_data)
 
-        print(f"✅ Podcast generated successfully: {podcast_result['id']}")
+        print(f"Podcast generated successfully: {podcast_result['id']}")
 
         return {
             "success": True,
@@ -1018,7 +1016,8 @@ async def generate_podcast(request: dict):
     except HTTPException:
         raise
     except Exception as e:
-        print(f"❌ Podcast generation failed: {str(e)}")
+        print(f"Podcast generation failed: {str(e)}")
+        import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Podcast generation failed: {str(e)}")
 
@@ -1060,15 +1059,15 @@ Requirements:
         return response.text.strip()
 
     except Exception as e:
-        print(f"❌ Error generating podcast summary: {e}")
+        print(f"Error generating podcast summary: {e}")
         return f"Summary unavailable for: {selected_text[:100]}..."
-
+    
 async def generate_podcast_audio(script: str, session_id: str) -> dict:
     """
-    Generate audio from podcast script with enhanced MP3 creation
+    Generate audio from podcast script with Azure OpenAI TTS
     """
     try:
-        print(f"🎙️ Generating audio for session {session_id}")
+        print(f"Generating audio for session {session_id}")
         
         # Create audio directory
         audio_dir = Path("storage/audio")
@@ -1078,26 +1077,36 @@ async def generate_podcast_audio(script: str, session_id: str) -> dict:
         audio_filename = f"podcast_{session_id}_{int(datetime.utcnow().timestamp())}.mp3"
         audio_path = audio_dir / audio_filename
         
-        # Try real TTS first
+        # --- Try Azure OpenAI TTS ---
         audio_created = False
-        
         try:
-            # Option 1: Try gTTS (Google Text-to-Speech)
-            from gtts import gTTS
-            import io
+            client = AzureOpenAI(
+                api_key=os.getenv("AZURE_TTS_KEY"),
+                api_version=os.getenv("AZURE_TTS_API_VERSION", "2025-03-01-preview"),
+                azure_endpoint=os.getenv("AZURE_TTS_ENDPOINT"),
+            )
+
+            deployment = os.getenv("AZURE_TTS_DEPLOYMENT", "tts")
+            voice = os.getenv("AZURE_TTS_VOICE", "alloy")  # alloy is a safe default
+
+            print(f"Using Azure OpenAI TTS (deployment={deployment}, voice={voice})...")
             
-            print("🎙️ Using Google TTS for audio generation...")
-            tts = gTTS(text=script, lang='en', slow=False)
-            tts.save(str(audio_path))
+            response = client.audio.speech.create(
+                model=deployment,  # This must match your Azure deployment name
+                voice=voice,
+                input=script,
+            )
+            
+            with open(audio_path, "wb") as f:
+                f.write(response.read())
+            
             audio_created = True
-            print(f"✅ Real TTS audio generated: {audio_path}")
-            
-        except ImportError:
-            print("⚠️ gTTS not available, creating enhanced dummy audio...")
-        except Exception as e:
-            print(f"⚠️ gTTS failed: {e}, creating enhanced dummy audio...")
+            print(f"Azure TTS audio generated: {audio_path}")
         
-        # Fallback: Create enhanced dummy MP3
+        except Exception as e:
+            print(f"Azure TTS failed: {e}, creating enhanced dummy audio...")
+        
+        # --- Fallback: Create enhanced dummy MP3 ---
         if not audio_created or not audio_path.exists() or audio_path.stat().st_size < 1000:
             create_enhanced_mp3(audio_path, script)
         
@@ -1113,7 +1122,7 @@ async def generate_podcast_audio(script: str, session_id: str) -> dict:
         
         audio_url = f"http://localhost:8080/audio/{audio_filename}"
         
-        print(f"✅ Audio ready: {audio_path} ({audio_path.stat().st_size} bytes)")
+        print(f"Audio ready: {audio_path} ({audio_path.stat().st_size} bytes)")
         
         return {
             "audio_url": audio_url,
@@ -1124,7 +1133,7 @@ async def generate_podcast_audio(script: str, session_id: str) -> dict:
         }
         
     except Exception as e:
-        print(f"❌ Audio generation error: {e}")
+        print(f"Audio generation error: {e}")
         return {
             "audio_url": f"http://localhost:8080/audio/placeholder_{session_id}.mp3",
             "duration": "5:00",
@@ -1132,27 +1141,6 @@ async def generate_podcast_audio(script: str, session_id: str) -> dict:
             "error": str(e)
         }
 
-# Audio serving route
-@router.get("/audio/{filename}")
-async def serve_audio_file(filename: str):
-    """Serve generated podcast audio files"""
-    from fastapi.responses import FileResponse
-    
-    audio_path = Path("storage/audio") / filename
-    
-    if audio_path.exists():
-        return FileResponse(
-            path=str(audio_path),
-            media_type="audio/mpeg",
-            filename=filename,
-            headers={
-                "Accept-Ranges": "bytes",
-                "Content-Type": "audio/mpeg",
-                "Cache-Control": "public, max-age=3600"
-            }
-        )
-    else:
-        raise HTTPException(status_code=404, detail="Audio file not found")
 
 # Health check endpoint
 @router.get("/health/")
@@ -1253,7 +1241,7 @@ async def serve_pdf_file(filename: str):
     else:
         raise HTTPException(status_code=404, detail="PDF file not found")
     
-    # ✅ ADD THIS DEBUG ENDPOINT TO ROUTES.PY
+    # ADD THIS DEBUG ENDPOINT TO ROUTES.PY
 @router.get("/debug/sessions")
 async def debug_all_sessions():
     """Debug endpoint to check all session data"""
@@ -1279,7 +1267,7 @@ async def debug_all_sessions():
     
     return {"sessions": debug_info, "total_sessions": len(SESSION_STORAGE)}
 
-# ✅ FIXED PDF-METADATA ENDPOINT
+# FIXED PDF-METADATA ENDPOINT
 @router.get("/pdf-metadata/{pdf_id}")
 async def get_pdf_metadata(pdf_id: str):
     """Get PDF metadata and access URL by unique ID"""
@@ -1297,7 +1285,7 @@ async def get_pdf_metadata(pdf_id: str):
                 print(f"  Doc {idx}: ID={doc_unique_id}, filename={doc.get('original_filename')}")
                 
                 if doc_unique_id == pdf_id:
-                    print(f"✅ Found PDF: {doc['original_filename']}")
+                    print(f"Found PDF: {doc['original_filename']}")
                     return {
                         "success": True,
                         "pdf_data": {
@@ -1311,7 +1299,7 @@ async def get_pdf_metadata(pdf_id: str):
                         }
                     }
         
-        print(f"❌ PDF not found: {pdf_id}")
+        print(f"PDF not found: {pdf_id}")
         print("💡 Available IDs:", [doc.get("unique_id") for session in SESSION_STORAGE.values() for doc in session.get("prior_documents", [])])
         
         raise HTTPException(status_code=404, detail=f"PDF not found: {pdf_id}")
@@ -1319,5 +1307,5 @@ async def get_pdf_metadata(pdf_id: str):
     except HTTPException:
         raise
     except Exception as e:
-        print(f"❌ Error retrieving PDF metadata: {e}")
+        print(f"Error retrieving PDF metadata: {e}")
         raise HTTPException(status_code=500, detail=f"Error retrieving PDF metadata: {str(e)}")

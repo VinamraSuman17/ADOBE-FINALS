@@ -102,6 +102,7 @@ const PodcastMode = ({ analysis, outline, isMultipleFiles, comparison }) => {
         });
       }
     } else {
+      console.log(introContent)
       script.push({
         title: "Introduction",
         content: introContent,
