@@ -169,6 +169,24 @@ Backend: http://localhost:8080
 
 Frontend: http://localhost:5173
 
+.env file for backend 
+``` bash
+GEMINI_API_KEY=AIzaSyCs273Qh2FdZbm-
+ADOBE_API_KEY=
+
+TTS_PROVIDER=azure
+AZURE_TTS_KEY=
+AZURE_TTS_ENDPOINT=
+AZURE_TTS_DEPLOYMENT=
+AZURE_TTS_API_VERSION=
+AZURE_TTS_VOICE=
+```
+
+.env file for frontend
+``` bash
+VITE_ADOBE_API_KEY=
+```
+
 ## Our Ideation Process: From Notes to Code
 
 Our entire algorithm is a direct result of the manual brainstorming and mind-mapping process. Below are the actual notes and diagrams we created during our planning phase, which formed the foundation of our code's logic.
