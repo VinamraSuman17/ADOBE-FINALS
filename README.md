@@ -178,8 +178,8 @@ TTS_PROVIDER=azure
 AZURE_TTS_KEY=
 AZURE_TTS_ENDPOINT=
 AZURE_TTS_DEPLOYMENT=
-AZURE_TTS_API_VERSION=
-AZURE_TTS_VOICE=
+AZURE_TTS_API_VERSION=2024-05-01-preview
+AZURE_TTS_VOICE=alloy
 ```
 
 ### Our Adobe Embedded API key for frontend and backend = b8b15fad536f4b8f81da542639fe452a (If you need this)
