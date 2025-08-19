@@ -1,5 +1,15 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Play, Pause, RotateCcw, Volume2, Clock, SkipForward, ListChecks, Mic, Info } from 'lucide-react';
+import React, { useState, useRef, useEffect, useCallback } from "react";
+import {
+  Play,
+  Pause,
+  RotateCcw,
+  Volume2,
+  Clock,
+  SkipForward,
+  ListChecks,
+  Mic,
+  Info,
+} from "lucide-react";
 
 const PodcastMode = ({ analysis, outline, isMultipleFiles, comparison }) => {
   const [isPlaying, setIsPlaying] = useState(false);
@@ -8,14 +18,16 @@ const PodcastMode = ({ analysis, outline, isMultipleFiles, comparison }) => {
   const [podcastScript, setPodcastScript] = useState([]);
   const [currentSection, setCurrentSection] = useState(0);
 
-  const speechSynthesisRef = useRef(typeof window !== 'undefined' ? window.speechSynthesis : null);
+  const speechSynthesisRef = useRef(
+    typeof window !== "undefined" ? window.speechSynthesis : null
+  );
   const progressInterval = useRef(null);
   const sectionTimeoutRef = useRef(null);
   const isPlayingRef = useRef(false);
 
   // Split long text into smaller utterances
   const speakText = useCallback((text, onChunkEnd, onComplete) => {
-    const chunks = (text || '').match(/.{1,250}(\s|$)/g) || [];
+    const chunks = (text || "").match(/.{1,250}(\s|$)/g) || [];
     let index = 0;
 
     const speakNext = () => {
@@ -36,7 +48,7 @@ const PodcastMode = ({ analysis, outline, isMultipleFiles, comparison }) => {
       };
 
       utterance.onerror = (e) => {
-        console.error('Speech synthesis error:', e);
+        console.error("Speech synthesis error:", e);
         index++;
         speakNext();
       };
@@ -55,60 +67,66 @@ const PodcastMode = ({ analysis, outline, isMultipleFiles, comparison }) => {
 
     speakNext();
   }, []);
+  function estimateDuration(text, wpm = 150) {
+    const words = text.trim().split(/\s+/).length;
+    const minutes = words / wpm;
+    return Math.ceil(minutes * 60); // in seconds
+  }
+
+  // Example usage in your script.push()
+  const introContent = `${analysis || "your document"}.`;
 
   const generateComprehensivePodcastScript = useCallback(() => {
     const script = [];
 
     if (isMultipleFiles && comparison) {
       script.push({
-        title: 'Introduction',
-        content: `Welcome to your comprehensive document analysis. Today we're analyzing ${comparison || 'multiple'} documents.`,
+        title: "Introduction",
+        content: `Welcome to your comprehensive document analysis. Today we're analyzing ${
+          comparison || "multiple"
+        } documents.`,
         duration: 4,
       });
 
       script.push({
-        title: 'Overview',
+        title: "Overview",
         content: `We completed a comparative analysis of your documents, identifying key themes and patterns.`,
         duration: 5,
       });
 
       if (comparison && comparison > 0) {
         script.push({
-          title: 'Common Themes',
+          title: "Common Themes",
           content: `Key themes identified: ${comparison}.`,
           duration: 6,
         });
       }
     } else {
       script.push({
-        title: 'Introduction',
-        content: `Welcome to your document analysis. We're exploring ${analysis || 'your document'}.`,
-        duration: 20, // realistic intro
+        title: "Introduction",
+        content: introContent,
+        duration: estimateDuration(introContent, 150), // auto-calculated duration
       });
 
       script.push({
-        title: 'Document Overview',
-        content: `This document contains ${outline?.length || 0} main sections.`,
+        title: "Document Overview",
+        content: `This document contains ${
+          outline?.length || 0
+        } main sections.`,
         duration: 10,
       });
-
-      if (analysis) {
-        script.push({
-          title: 'Key Insights',
-          content: `Key insights summary: ${typeof analysis === 'string' ? analysis.slice(0, 160) + '...' : 'Available in the transcript.'}`,
-          duration: 8,
-        });
-      }
     }
 
     script.push({
-      title: 'Conclusion',
+      title: "Conclusion",
       content: `This concludes your analysis. Thank you for using our service.`,
       duration: 4,
     });
 
     setPodcastScript(script);
-    setTotalDuration(script.reduce((total, section) => total + (section.duration || 0), 0));
+    setTotalDuration(
+      script.reduce((total, section) => total + (section.duration || 0), 0)
+    );
   }, [analysis, outline, isMultipleFiles, comparison]);
 
   useEffect(() => {
@@ -117,46 +135,47 @@ const PodcastMode = ({ analysis, outline, isMultipleFiles, comparison }) => {
     }
   }, [generateComprehensivePodcastScript]);
 
-  const startProgressTracking = useCallback((duration) => {
-    clearInterval(progressInterval.current);
-    let elapsed = 0;
-    progressInterval.current = setInterval(() => {
-      elapsed += 0.3;
-      setCurrentTime((prev) => {
-        const newTime = prev + 0.3;
-        return newTime >= totalDuration ? totalDuration : newTime;
-      });
+  const startProgressTracking = useCallback(
+    (duration) => {
+      clearInterval(progressInterval.current);
+      let elapsed = 0;
+      progressInterval.current = setInterval(() => {
+        elapsed += 0.3;
+        setCurrentTime((prev) => {
+          const newTime = prev + 0.3;
+          return newTime >= totalDuration ? totalDuration : newTime;
+        });
 
-      if (elapsed >= duration) {
-        clearInterval(progressInterval.current);
+        if (elapsed >= duration) {
+          clearInterval(progressInterval.current);
+        }
+      }, 300);
+    },
+    [totalDuration]
+  );
+
+  const playSection = useCallback(
+    (sectionIndex) => {
+      if (sectionTimeoutRef.current) {
+        clearTimeout(sectionTimeoutRef.current);
+        sectionTimeoutRef.current = null;
       }
-    }, 300);
-  }, [totalDuration]);
 
-  const playSection = useCallback((sectionIndex) => {
-    if (sectionTimeoutRef.current) {
-      clearTimeout(sectionTimeoutRef.current);
-      sectionTimeoutRef.current = null;
-    }
+      if (sectionIndex >= podcastScript.length) {
+        setIsPlaying(false);
+        isPlayingRef.current = false;
+        setCurrentSection(0);
+        setCurrentTime(0);
+        return;
+      }
 
-    if (sectionIndex >= podcastScript.length) {
-      setIsPlaying(false);
-      isPlayingRef.current = false;
-      setCurrentSection(0);
-      setCurrentTime(0);
-      return;
-    }
+      const section = podcastScript[sectionIndex];
+      if (!section) return;
 
-    const section = podcastScript[sectionIndex];
-    if (!section) return;
+      setCurrentSection(sectionIndex);
+      startProgressTracking(section.duration || 0);
 
-    setCurrentSection(sectionIndex);
-    startProgressTracking(section.duration || 0);
-
-    speakText(
-      section.content,
-      null,
-      () => {
+      speakText(section.content, null, () => {
         if (isPlayingRef.current && sectionIndex + 1 < podcastScript.length) {
           setTimeout(() => playSection(sectionIndex + 1), 400);
         } else if (sectionIndex + 1 >= podcastScript.length) {
@@ -165,16 +184,17 @@ const PodcastMode = ({ analysis, outline, isMultipleFiles, comparison }) => {
           setCurrentSection(0);
           setCurrentTime(0);
         }
-      }
-    );
+      });
 
-    // Safety timeout (if speech engine misbehaves)
-    sectionTimeoutRef.current = setTimeout(() => {
-      if (isPlayingRef.current && sectionIndex + 1 < podcastScript.length) {
-        playSection(sectionIndex + 1);
-      }
-    }, ((section.duration || 0) + 2) * 1000);
-  }, [podcastScript, speakText, startProgressTracking]);
+      // Safety timeout (if speech engine misbehaves)
+      sectionTimeoutRef.current = setTimeout(() => {
+        if (isPlayingRef.current && sectionIndex + 1 < podcastScript.length) {
+          playSection(sectionIndex + 1);
+        }
+      }, ((section.duration || 0) + 2) * 1000);
+    },
+    [podcastScript, speakText, startProgressTracking]
+  );
 
   const playPodcast = useCallback(() => {
     if (podcastScript.length === 0) return;
@@ -229,10 +249,11 @@ const PodcastMode = ({ analysis, outline, isMultipleFiles, comparison }) => {
   const formatTime = (seconds) => {
     const mins = Math.floor((seconds || 0) / 60);
     const secs = Math.floor((seconds || 0) % 60);
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
+    return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
-  const progressPercentage = totalDuration > 0 ? (currentTime / totalDuration) * 100 : 0;
+  const progressPercentage =
+    totalDuration > 0 ? (currentTime / totalDuration) * 100 : 0;
 
   useEffect(() => {
     return () => {
@@ -266,11 +287,14 @@ const PodcastMode = ({ analysis, outline, isMultipleFiles, comparison }) => {
       {/* Status */}
       <div className="mb-4 p-3 bg-gray-900 rounded border border-gray-800 text-xs text-gray-300">
         <div className="flex flex-wrap items-center gap-3">
-          <span>Current: {Math.min(currentSection + 1, podcastScript.length)}/{podcastScript.length || 0}</span>
+          <span>
+            Current: {Math.min(currentSection + 1, podcastScript.length)}/
+            {podcastScript.length || 0}
+          </span>
           <span>•</span>
-          <span>Playing: {isPlaying ? 'Yes' : 'No'}</span>
+          <span>Playing: {isPlaying ? "Yes" : "No"}</span>
           <span>•</span>
-          <span>Section: {podcastScript[currentSection]?.title || 'None'}</span>
+          <span>Section: {podcastScript[currentSection]?.title || "None"}</span>
         </div>
       </div>
 
@@ -308,7 +332,10 @@ const PodcastMode = ({ analysis, outline, isMultipleFiles, comparison }) => {
 
           <button
             onClick={skipToNext}
-            disabled={currentSection + 1 >= podcastScript.length || !podcastScript.length}
+            disabled={
+              currentSection + 1 >= podcastScript.length ||
+              !podcastScript.length
+            }
             className="p-3 rounded-full bg-blue-600 text-white hover:bg-blue-700 disabled:bg-gray-700 disabled:cursor-not-allowed transition-colors"
             title="Next Section"
             aria-label="Next Section"
@@ -321,10 +348,12 @@ const PodcastMode = ({ analysis, outline, isMultipleFiles, comparison }) => {
             onClick={isPlaying ? pausePodcast : playPodcast}
             disabled={podcastScript.length === 0}
             className={`p-5 rounded-full text-white transition-all transform hover:scale-105 disabled:bg-gray-700 disabled:cursor-not-allowed ${
-              isPlaying ? 'bg-red-600 hover:bg-red-700' : 'bg-emerald-600 hover:bg-emerald-700'
+              isPlaying
+                ? "bg-red-600 hover:bg-red-700"
+                : "bg-emerald-600 hover:bg-emerald-700"
             }`}
-            title={isPlaying ? 'Pause' : 'Play All Sections'}
-            aria-label={isPlaying ? 'Pause' : 'Play All Sections'}
+            title={isPlaying ? "Pause" : "Play All Sections"}
+            aria-label={isPlaying ? "Pause" : "Play All Sections"}
             type="button"
           >
             {isPlaying ? <Pause size={28} /> : <Play size={28} />}
@@ -332,7 +361,9 @@ const PodcastMode = ({ analysis, outline, isMultipleFiles, comparison }) => {
 
           <div className="hidden sm:flex items-center gap-2 text-gray-400">
             <Clock size={16} />
-            <span className="text-sm">{Math.max(1, Math.ceil(totalDuration / 60))} min</span>
+            <span className="text-sm">
+              {Math.max(1, Math.ceil(totalDuration / 60))} min
+            </span>
           </div>
         </div>
 
@@ -341,10 +372,16 @@ const PodcastMode = ({ analysis, outline, isMultipleFiles, comparison }) => {
           <div className="mt-6 text-center">
             <div
               className={`inline-flex items-center gap-3 rounded-full px-6 py-3 border ${
-                isPlaying ? 'bg-indigo-600/15 border-indigo-500/30' : 'bg-gray-800/60 border-gray-700'
+                isPlaying
+                  ? "bg-indigo-600/15 border-indigo-500/30"
+                  : "bg-gray-800/60 border-gray-700"
               }`}
             >
-              <Mic className={`w-4 h-4 ${isPlaying ? 'text-indigo-300' : 'text-gray-400'}`} />
+              <Mic
+                className={`w-4 h-4 ${
+                  isPlaying ? "text-indigo-300" : "text-gray-400"
+                }`}
+              />
               <span className="text-sm font-medium text-white">
                 {podcastScript[currentSection].title}
               </span>
@@ -371,27 +408,30 @@ const PodcastMode = ({ analysis, outline, isMultipleFiles, comparison }) => {
                 key={index}
                 className={`p-3 rounded border transition-all ${
                   isActive
-                    ? 'bg-indigo-900/30 border-indigo-600/50'
+                    ? "bg-indigo-900/30 border-indigo-600/50"
                     : isDone
-                    ? 'bg-emerald-900/20 border-emerald-600/30'
-                    : 'bg-gray-900 border-gray-700'
+                    ? "bg-emerald-900/20 border-emerald-600/30"
+                    : "bg-gray-900 border-gray-700"
                 }`}
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <span className="text-xs font-mono text-gray-300">
-                      {String(index + 1).padStart(2, '0')}
+                      {String(index + 1).padStart(2, "0")}
                     </span>
                     <span className="text-sm text-white">{section.title}</span>
                   </div>
-                  <span className="text-xs text-gray-500">{section.duration}s</span>
+                  <span className="text-xs text-gray-500">
+                    {section.duration}s
+                  </span>
                 </div>
               </div>
             );
           })}
           {podcastScript.length === 0 && (
             <div className="p-4 text-xs text-gray-400 border border-gray-800 rounded bg-gray-900/60">
-              No sections generated yet. Start by creating a podcast from your analysis.
+              No sections generated yet. Start by creating a podcast from your
+              analysis.
             </div>
           )}
         </div>

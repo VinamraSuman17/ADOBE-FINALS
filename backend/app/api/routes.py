@@ -960,162 +960,110 @@ def retrieve_from_prior_documents(selection_text: str, prior_docs: List[dict], t
 # ✅ ENHANCED PODCAST GENERATION WITH GEMINI 2.5 FLASH
 @router.post("/generate-podcast/")
 async def generate_podcast(request: dict):
-    """
-    Adobe Bonus Feature: Generate 2-speaker podcast from analysis results
-    Enhanced with DEEP Gemini 2.5 Flash insights integration
-    """
     try:
-        print(f"🎧 Received enhanced podcast generation request")
-        
-        # Extract data from request body
-        analysis_data = request.get('analysis_data')
-        session_id = request.get('session_id')
-        selected_text = request.get('selected_text', '')
-        voice_config = request.get('voice_config', {
-            'speaker1': 'AI Research Host',
-            'speaker2': 'Deep Analysis Expert'
-        })
-        
-        # Validate required fields
+        # --- Extract data from request body ---
+        analysis_data = request.get("analysis_data")
+        session_id = request.get("session_id")
+        selected_text = request.get("selected_text", "")
+
+        # --- Validate required fields ---
         if not session_id:
             raise HTTPException(status_code=400, detail="session_id is required")
-        
         if not analysis_data:
             raise HTTPException(status_code=400, detail="analysis_data is required")
-        
-        print(f"🎧 Generating enhanced podcast for session {session_id}")
-        
-        # Get session data
+
+        print(f"🎧 Generating podcast for session {session_id}")
+
+        # --- Get session data ---
         session_data = get_session_data(session_id)
         if not session_data:
             raise HTTPException(status_code=404, detail="Session not found")
-        
-        # Generate enhanced podcast script using Gemini insights
-        podcast_script = generate_enhanced_podcast_script(analysis_data, selected_text)
-        
-        # Generate audio
-        audio_data = await generate_podcast_audio(podcast_script, voice_config, session_id)
-        
-        # Store podcast in session
+
+        # --- Generate podcast script (summary only, no branding) ---
+        podcast_script = await generate_podcast_summary(selected_text, analysis_data)
+        print('vinamra chu')
+        # --- Generate audio from script ---
+        audio_data = await generate_podcast_audio(podcast_script, session_id)
+
+        # --- Build podcast result object ---
         podcast_result = {
             "id": f"podcast_{session_id}_{int(datetime.utcnow().timestamp())}",
             "script": podcast_script,
             "audio_url": audio_data.get("audio_url"),
-            "duration": audio_data.get("duration", "5:30"),
-            "speakers": voice_config,
+            "duration": audio_data.get("duration", "0:00"),
             "generated_at": datetime.utcnow().isoformat(),
             "session_id": session_id,
-            "selected_text_preview": selected_text[:100] + "..." if len(selected_text) > 100 else selected_text,
+            "selected_text_preview": (
+                selected_text[:100] + "..."
+                if len(selected_text) > 100 else selected_text
+            ),
             "status": "ready",
             "ai_enhanced": True,
             "deep_analysis": True,
-            "gemini_model": "gemini-2.5-flash"  # Track which model was used
+            "gemini_model": "gemini-2.5-flash",  # track internally
         }
-        
-        # Add to session storage
-        if "podcasts" not in session_data:
-            session_data["podcasts"] = []
-        session_data["podcasts"].append(podcast_result)
+
+        # --- Store podcast in session ---
+        session_data.setdefault("podcasts", []).append(podcast_result)
         store_session_data(session_id, session_data)
-        
-        print(f"✅ Enhanced podcast generated successfully: {podcast_result['id']}")
-        
+
+        print(f"✅ Podcast generated successfully: {podcast_result['id']}")
+
         return {
             "success": True,
             "podcast": podcast_result,
-            "message": "Deep AI-enhanced podcast generated successfully"
+            "message": "Podcast generated successfully",
         }
-        
+
     except HTTPException:
         raise
     except Exception as e:
         print(f"❌ Podcast generation failed: {str(e)}")
-        import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Podcast generation failed: {str(e)}")
 
-def generate_enhanced_podcast_script(analysis_data: dict, selected_text: str) -> str:
-    """
-    Generate enhanced 2-speaker podcast script using DEEP Gemini 2.5 Flash insights
-    """
-    try:
-        # Extract insights and snippets
-        insights = analysis_data.get("insights", {})
-        snippets = analysis_data.get("relevant_snippets", [])
-        
-        # Create engaging podcast script with DEEP Gemini insights
-        script_parts = []
-        
-        # Enhanced Introduction
-        script_parts.append("Speaker 1 (AI Research Host): Welcome to 'Deep Document Intelligence', your premier AI-powered research companion! Today we're conducting an extraordinary cross-document analysis using advanced Gemini 2.5 Flash AI.")
-        script_parts.append(f"Speaker 2 (Deep Analysis Expert): That's right! We've performed deep semantic analysis on your selected text: '{selected_text[:120]}{'...' if len(selected_text) > 120 else ''}' against your entire document ecosystem using cutting-edge Gemini 2.5 Flash intelligence.")
-        
-        # Breakthrough Connections Section
-        if insights.get("breakthrough_connections") and len(insights["breakthrough_connections"]) > 0:
-            script_parts.append("Speaker 1: Let's start with the breakthrough connections our Gemini 2.5 Flash AI discovered. What revolutionary insights emerged?")
-            script_parts.append(f"Speaker 2: {insights['breakthrough_connections'][0]}")
-            if len(insights["breakthrough_connections"]) > 1:
-                script_parts.append(f"Speaker 1: Remarkable! There's more - {insights['breakthrough_connections'][1]}")
-        
-        # Deep Similarities Section with AI Enhancement
-        if insights.get("deep_similarities") and len(insights["deep_similarities"]) > 0:
-            script_parts.append("Speaker 1: Now, what deep conceptual similarities did our advanced Gemini 2.5 Flash analysis uncover?")
-            script_parts.append(f"Speaker 2: The AI identified profound patterns. {insights['deep_similarities'][0]}")
-            if len(insights["deep_similarities"]) > 1:
-                script_parts.append(f"Speaker 1: Fascinating convergence! {insights['deep_similarities'][1]}")
-        
-        # Strategic Contradictions and Evolutionary Variations
-        if insights.get("strategic_contradictions") and len(insights["strategic_contradictions"]) > 0:
-            script_parts.append("Speaker 1: Were there any strategic contradictions or paradigm conflicts in your document collection?")
-            script_parts.append(f"Speaker 2: Yes, our deep analysis revealed significant tensions. {insights['strategic_contradictions'][0]}")
-        
-        if insights.get("evolutionary_variations") and len(insights["evolutionary_variations"]) > 0:
-            script_parts.append("Speaker 1: What about evolutionary patterns and methodological variations?")
-            script_parts.append(f"Speaker 2: {insights['evolutionary_variations'][0]}")
-        
-        # Strategic Insights Section
-        if insights.get("strategic_insights") and len(insights["strategic_insights"]) > 0:
-            script_parts.append("Speaker 1: This is where Gemini 2.5 Flash really demonstrates its strategic value. What actionable intelligence did you discover?")
-            script_parts.append(f"Speaker 2: {insights['strategic_insights'][0]}")
-            if len(insights["strategic_insights"]) > 1:
-                script_parts.append(f"Speaker 1: Excellent strategic intelligence! {insights['strategic_insights'][1]}")
-        
-        # Knowledge Synthesis Section
-        if insights.get("knowledge_synthesis") and len(insights["knowledge_synthesis"]) > 0:
-            script_parts.append("Speaker 1: Let's discuss the meta-analysis. How do all these documents work together?")
-            script_parts.append(f"Speaker 2: {insights['knowledge_synthesis'][0]}")
-        
-        # Powerful Examples Section
-        if insights.get("powerful_examples") and len(insights["powerful_examples"]) > 0:
-            script_parts.append("Speaker 1: Can you share some compelling evidence our Gemini 2.5 Flash AI discovered?")
-            script_parts.append(f"Speaker 2: Absolutely! {insights['powerful_examples'][0]}")
-        
-        # Enhanced Statistics
-        script_parts.append(f"Speaker 1: To give our listeners context, we analyzed {len(snippets)} relevant sections from your document library using advanced semantic matching and natural language understanding powered by Gemini 2.5 Flash.")
-        script_parts.append("Speaker 2: The AI used sophisticated pattern recognition to understand not just surface keywords, but deep conceptual relationships and hidden knowledge architectures.")
-        
-        # Critical Limitations (if any)
-        if insights.get("critical_limitations") and len(insights["critical_limitations"]) > 0:
-            script_parts.append("Speaker 1: Any critical constraints or limitations we should highlight?")
-            script_parts.append(f"Speaker 2: {insights['critical_limitations'][0]}")
-        
-        # Enhanced Conclusion
-        script_parts.append("Speaker 1: This demonstrates the extraordinary power of Gemini 2.5 Flash AI in research - revealing hidden connections and patterns that would require extensive manual analysis to discover.")
-        script_parts.append("Speaker 2: Exactly! It's like having a superintelligent research partner that can instantly cross-reference your entire knowledge base, identify strategic patterns, and provide breakthrough insights.")
-        script_parts.append("Speaker 1: The future of research is here, and it's Gemini 2.5 Flash AI-powered document intelligence!")
-        script_parts.append("Speaker 2: Keep exploring, keep connecting, and let advanced AI transform your research journey into strategic intelligence!")
-        
-        # Join all parts
-        full_script = "\n\n".join(script_parts)
-        
-        print(f"📝 Generated enhanced podcast script: {len(full_script)} characters")
-        return full_script
-        
-    except Exception as e:
-        print(f"❌ Enhanced script generation error: {e}")
-        return f"Speaker 1: Welcome to our deep AI-powered analysis of: {selected_text[:100]}...\nSpeaker 2: Our advanced Gemini 2.5 Flash AI discovered extraordinary connections in your document library.\nSpeaker 1: Thanks for listening to this AI-enhanced research podcast!"
 
-async def generate_podcast_audio(script: str, voice_config: dict, session_id: str) -> dict:
+# --- Generate Podcast Summary Script ---
+async def generate_podcast_summary(selected_text: str, analysis_data: dict) -> str:
+    try:
+        model = genai.GenerativeModel(
+            'gemini-2.0-flash-exp',  # Updated to use Gemini 2.5 Flash
+            generation_config=genai.types.GenerationConfig(
+                temperature=0.7,
+                top_p=0.8,
+                top_k=40,
+                max_output_tokens=2048,
+            )
+        )
+        print(gemini_api_key)
+        prompt = f"""
+Generate a podcast-style narration script.
+
+Text to analyze:
+"{selected_text}"
+
+Additional structured insights:
+{analysis_data}
+
+Requirements:
+- Produce a single continuous narrative, suitable for spoken audio.
+- Do NOT include any formatting symbols (#, ##, *, -, etc.).
+- Do NOT use dialogue or speaker labels (like "Host:" or "Narrator:").
+- Write in a clear, engaging, and professional tone.
+- Summarize the text concisely while highlighting key insights, themes, similarities, contradictions, and examples where relevant.
+- Use smooth transitions so it flows naturally like a podcast narration.
+- End with a well-rounded closing thought or holistic perspective that ties everything together.
+- Output must be plain text only, with no special characters or metadata.
+"""
+        response = model.generate_content(prompt)
+        print(response)
+        return response.text.strip()
+
+    except Exception as e:
+        print(f"❌ Error generating podcast summary: {e}")
+        return f"Summary unavailable for: {selected_text[:100]}..."
+
+async def generate_podcast_audio(script: str, session_id: str) -> dict:
     """
     Generate audio from podcast script with enhanced MP3 creation
     """

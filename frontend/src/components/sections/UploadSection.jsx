@@ -28,6 +28,17 @@ import {
   Volume2,
   Pause,
   Play,
+  Sparkles,
+  Bot,
+  Check,
+  Notebook,
+  Cpu,
+  Network,
+  View,
+  Eye,
+  Copy,
+  ViewIcon,
+  GitGraph,
 } from "lucide-react";
 
 const UploadSection = ({
@@ -196,7 +207,7 @@ const UploadSection = ({
       setAnalysisResults(results);
 
       toast(
-        `🤖 Deep AI insights generated! Found ${
+        `Deep AI insights generated! Found ${
           results.metadata?.total_insights || 0
         } insights with PDF preview available.`
       );
@@ -237,10 +248,6 @@ const UploadSection = ({
           analysis_data: analysisResults,
           selected_text: selectedText?.text || "",
           session_id: sessionId,
-          voice_config: {
-            speaker1: "AI Research Host",
-            speaker2: "Deep Analysis Expert",
-          },
         }),
       });
 
@@ -345,13 +352,13 @@ const UploadSection = ({
           </h2>
           <div className="flex items-center justify-center space-x-4 mb-4">
             <div className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-green-600/20 to-emerald-600/20 rounded-full border border-green-500/30">
-              <span className="text-xl">🧠</span>
+              <span className="text-xl"><Cpu/></span>
               <span className="text-sm text-green-300 font-medium">
                 Deep Analysis Engine
               </span>
             </div>
             <div className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-orange-600/20 to-red-600/20 rounded-full border border-orange-500/30">
-              <span className="text-xl">👁️</span>
+              <span className="text-xl"><View/></span>
               <span className="text-sm text-orange-300 font-medium">
                 PDF Preview
               </span>
@@ -452,9 +459,12 @@ const UploadSection = ({
                   : "border-gray-700"
               }`}
             >
-              <h3 className="text-2xl font-bold text-white mb-4">
-                📚 Step 1: Build AI Knowledge Base
-              </h3>
+              <h3 className="text-2xl font-bold text-white mb-4 flex space-x-2 items-center">
+                  <span className="text-2xl"><Notebook/></span>
+                      <span className="font-medium">
+                        Step 1: Build AI Knowledge Base
+                      </span>
+                </h3>
               <p className="text-gray-300 mb-6">
                 Upload 20-30 PDFs to create your intelligent document library.
                 The AI will use these for deep cross-document analysis with PDF
@@ -479,7 +489,6 @@ const UploadSection = ({
                     htmlFor="prior-docs-input"
                     className="cursor-pointer block w-full p-8 border-2 border-dashed border-gray-600 rounded-lg text-center hover:border-gray-500 transition-colors"
                   >
-                    <div className="text-6xl text-gray-500 mb-4">🧠</div>
                     <p className="text-white font-medium">
                       Click to select 20-30 PDF files
                     </p>
@@ -522,7 +531,6 @@ const UploadSection = ({
                         key={idx}
                         className="text-xs bg-gray-700 text-gray-300 p-2 rounded flex items-center space-x-2"
                       >
-                        {/* <span>🧠</span> */}
                         <span className="truncate">{file.name}</span>
                       </div>
                     ))}
@@ -555,8 +563,11 @@ const UploadSection = ({
                     : "border-gray-700"
                 }`}
               >
-                <h3 className="text-2xl font-bold text-white mb-4">
-                  📖 Step 2: Upload Analysis Target
+                <h3 className="text-2xl font-bold text-white mb-4 flex space-x-2 items-center">
+                  <span className="text-2xl"><Cpu/></span>
+                      <span className="font-medium">
+                        Step 2: Upload Analysis Target
+                      </span>
                 </h3>
                 <p className="text-gray-300 mb-6">
                   Upload the PDF you're currently reading. Select text from this
@@ -609,7 +620,7 @@ const UploadSection = ({
                 ) : (
                   <div>
                     <div className="flex items-center space-x-2 text-green-400 mb-4">
-                      <span className="text-2xl">✅</span>
+                      <span className="text-2xl"><Check/></span>
                       <span className="font-medium">
                         Analysis target: {currentDocument.name}
                       </span>
@@ -629,13 +640,15 @@ const UploadSection = ({
             {currentDocument && (
               <div
                 id="ai-analysis"
-                className={`bg-gray-800 rounded-lg p-6 border ${
-                  stage === "analysis" ? "border-red-600" : "border-gray-700"
-                }`}
+                className={`bg-gray-800 rounded-lg p-6
+                `}
               >
                 <div className="flex items-center space-x-3 mb-4">
-                  <h3 className="text-2xl font-bold text-white">
-                    🤖 Step 3: Deep AI Analysis
+                  <h3 className="text-2xl font-bold text-white mb-4 flex space-x-2 items-center">
+                  <span className="text-2xl"><Network/></span>
+                      <span className="font-medium">
+                         Step 3: Deep AI Analysis
+                      </span>
                   </h3>
                   <div className="px-2 py-1 bg-orange-600/20 rounded border border-orange-500/30">
                     <span className="text-xs text-orange-300">PDF Preview</span>
@@ -653,8 +666,7 @@ const UploadSection = ({
                       Selected for AI Analysis:
                     </h4>
                     <p className="text-gray-300 text-sm bg-gray-600 p-2 rounded">
-                      "{selectedText.text.substring(0, 200)}
-                      {selectedText.text.length > 200 ? "..." : ""}"
+                      "{selectedText.text}"
                     </p>
                     <div className="flex items-center justify-between mt-2">
                       <p className="text-xs text-gray-400">
@@ -686,7 +698,6 @@ const UploadSection = ({
                     </div>
                     <div className="space-y-1 text-sm text-purple-300">
                       <div className="flex items-center space-x-2">
-                        <span>🧠</span>
                         <span>
                           AI analyzing across {priorDocuments.length}{" "}
                           documents...
@@ -711,7 +722,7 @@ const UploadSection = ({
                 {analysisResults && (
                   <div className="mt-4 p-4 bg-gradient-to-r from-green-900/20 to-emerald-900/20 border border-green-400 rounded-lg">
                     <div className="flex items-center space-x-2 text-green-400 mb-2">
-                      <span className="text-xl">🎉</span>
+                      <span className="text-xl"><Sparkles/></span>
                       <span className="font-medium">
                         Deep AI Analysis Complete!
                       </span>
@@ -859,7 +870,7 @@ const DeepAiAnalysisResultsPanel = ({
   };
 
   return (
-    <div className="bg-gray-800 rounded-lg p-4 border border-gray-700">
+    <div className="bg-gray-800 rounded-lg p-4">
       <div className="flex items-center space-x-3 mb-4">
         <h3 className="text-xl font-bold text-white">
           Deep AI Analysis Results
@@ -878,14 +889,17 @@ const DeepAiAnalysisResultsPanel = ({
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className={`px-4 py-2 rounded text-sm font-medium transition-colors ${
+            className={`px-4 py-2 rounded text-sm font-medium flex items-center transition-colors ${
               activeTab === tab
                 ? "bg-red-600 text-white"
                 : "bg-gray-700 text-gray-300 hover:bg-gray-600"
             }`}
           >
-            {tab === "insights" && "🧠 AI Insights"}
-            {tab === "snippets" && "📋 PDF Previews"}
+            {tab === "insights" &&
+              <Lightbulb className="mr-1 text-yellow-200"/>
+            }
+            {tab === "insights" && "AI Insights"}
+            {tab === "snippets" && "PDF Previews"}
             {tab === "podcast" && "🎧 AI Podcast"}
           </button>
         ))}
@@ -900,10 +914,8 @@ const DeepAiAnalysisResultsPanel = ({
       {activeTab === "snippets" && (
         <div className="space-y-3">
           <h4 className="font-bold text-white mb-3 flex items-center space-x-2">
-            <span>📋 Cross-Document Connections</span>
-            <span className="text-sm text-gray-400">
-              ({results.relevant_snippets?.length || 0})
-            </span>
+            <span><GitGraph/></span>
+            <span>Cross-Document Connections</span>
             <div className="px-2 py-1 bg-purple-600/20 rounded border border-purple-500/30">
               <span className="text-xs text-purple-300">Preview Ready</span>
             </div>
@@ -915,11 +927,11 @@ const DeepAiAnalysisResultsPanel = ({
             >
               <div className="flex justify-between items-start mb-2">
                 <div className="text-sm font-medium text-red-400 flex items-center space-x-2">
-                  <span>📄 {snippet.document_name}</span>
+                  <span>{snippet.document_name}</span>
                   {snippet.document_id && (
                     <div className="px-1 py-0.5 bg-purple-600/20 rounded">
                       <span className="text-xs text-purple-300">
-                        👁️ Preview
+                        Preview
                       </span>
                     </div>
                   )}
@@ -945,9 +957,9 @@ const DeepAiAnalysisResultsPanel = ({
                         onPDFPreview(snippet);
                         document.body.style.overflow = "hidden";
                       }}
-                      className="text-xs bg-purple-600 hover:bg-purple-700 text-white px-2 py-1 rounded flex items-center space-x-1"
+                      className="text-xs bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded flex items-center space-x-1"
                     >
-                      <span>👁️</span>
+                      <span><Eye size={18}/></span>
                       <span>Preview PDF</span>
                     </button>
                   )}
@@ -959,9 +971,9 @@ const DeepAiAnalysisResultsPanel = ({
                       e.preventDefault();
                       onSnippetClick(snippet);
                     }}
-                    className="text-xs bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded flex items-center space-x-1"
+                    className="text-xs bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded flex items-center space-x-1"
                   >
-                    <span>🔍</span>
+                    <span><ViewIcon size={17}/></span>
                     <span>View Current</span>
                   </button>
 
@@ -973,20 +985,11 @@ const DeepAiAnalysisResultsPanel = ({
                       navigator.clipboard.writeText(snippet.section_text);
                       toast("📋 Text copied to clipboard!");
                     }}
-                    className="text-xs bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded flex items-center space-x-1"
+                    className="text-xs bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded flex items-center space-x-1"
                   >
-                    <span>📋</span>
+                    <span><Copy size={15}/></span>
                     <span>Copy Text</span>
                   </button>
-                </div>
-
-                <div className="text-xs text-gray-500">
-                  AI Relevance: {(snippet.similarity_score * 100).toFixed(1)}%
-                  {snippet.document_id && (
-                    <span className="ml-2 text-purple-400">
-                      • Preview Available
-                    </span>
-                  )}
                 </div>
               </div>
             </div>
