@@ -66,7 +66,7 @@ const HeroSection = () => {
       id="home"
       className="min-h-screen mt-16 flex items-center justify-center px-4 bg-black overflow-hidden pt-12 pb-6"
     >
-      <div className="dark:bg-neutral-800 absolute top-12 scale-110 w-[90vw] h-screen opacity-45 translate-y-10">
+      <div className="dark:bg-neutral-800 absolute top-12 scale-125 w-[79vw] h-screen opacity-35 translate-y-10">
         <ThreeDMarquee images={images} />
       </div>
       <div className="max-w-6xl mx-auto text-center z-10">
