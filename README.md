@@ -40,7 +40,7 @@ Most hackathon projects demonstrate a single feature. Our system demonstrates a 
 - Generate a podcast → listen in the browser.
 
 ### Built For Students: Fast, Efficient, Single‑Model Design
-We built this with students in mind—simple setup, low compute, responsive UX. The core retrieval runs on a single compact model (~80–100MB), ensuring it works efficiently and fast on typical laptops without GPUs. This keeps downloads light, memory use modest, and interactions snappy.
+ - We built this with students in mind—simple setup, low compute, responsive UX. The core retrieval runs on a single compact model (~80–100MB), ensuring it works efficiently and fast on typical laptops without GPUs. This keeps downloads light, memory use modest, and interactions snappy.
 ---
 
 ## How It Builds on Prior Rounds
