@@ -44,12 +44,12 @@ Most hackathon projects demonstrate a single feature. Our system demonstrates a 
 
 ## How It Builds on Prior Rounds
 
-### Round 1A: Proper PDF Extractor  
+### Round 1A: Proper PDF Extractor  (refer to 'https://github.com/VinamraSuman17/ADOBE-TEAM-SPARK-1A')
 - Extracts **hierarchical headings** and maps them to **exact page numbers**.  
 - Used in the Finale to ensure **precise navigation** inside PDFs.  
 - Without this, AI insights would lack anchors to real document locations.  
 
-### Round 1B: Persona-Based Analyzer  
+### Round 1B: Persona-Based Analyzer ( refer to 'https://github.com/VinamraSuman17/ADOBE-TEAM-SPARK-1B')  
 - Computes **semantic relevance** between prior documents and the current one.  
 - Generates **summaries** to explain why a snippet is relevant.  
 - In Finale, this forms the **retrieval backbone**, ensuring the right snippets reach Gemini.  
@@ -124,14 +124,20 @@ Run the Container
 
 Linux/macOS
 ```bash
-docker run -v /path/to/credentials:/credentials \
+docker run -v "/path/to/your/adobe/folder:/credentials" \
   -e ADOBE_EMBED_API_KEY="enter-your-adobe-api-key-here" \
   -e GEMINI_API_KEY="enter-your-gemini-api-key-here" \
   -e LLM_PROVIDER="gemini" \
   -e GOOGLE_APPLICATION_CREDENTIALS="/credentials/adbe-gcp.json" \
   -e GEMINI_MODEL="gemini-2.5-flash" \
-  -e TTS_PROVIDER="gemini" \
+  -e TTS_PROVIDER="azure" \
+  -e AZURE_TTS_KEY="enter-your-azure-tts-key-here" \
+  -e AZURE_TTS_ENDPOINT="enter-your-azure-tts-endpoint-here" \
+  -e AZURE_TTS_DEPLOYMENT="enter-your-azure-tts-deployment-here" \
+  -e AZURE_TTS_API_VERSION="2024-05-01-preview" \
+  -e AZURE_TTS_VOICE="alloy" \
   -p 8080:8080 yourimageidentifier
+
 ```
 
 Windows (PowerShell)
@@ -142,8 +148,14 @@ docker run -v "C:\Users\User\OneDrive\Desktop\Adobe:/credentials" `
   -e LLM_PROVIDER="gemini" `
   -e GOOGLE_APPLICATION_CREDENTIALS="/credentials/adbe-gcp.json" `
   -e GEMINI_MODEL="gemini-2.5-flash" `
-  -e TTS_PROVIDER="gemini" `
+  -e TTS_PROVIDER="azure" `
+  -e AZURE_TTS_KEY="enter-your-azure-tts-key-here" `
+  -e AZURE_TTS_ENDPOINT="enter-your-azure-tts-endpoint-here" `
+  -e AZURE_TTS_DEPLOYMENT="enter-your-azure-tts-deployment-here" `
+  -e AZURE_TTS_API_VERSION="2024-05-01-preview" `
+  -e AZURE_TTS_VOICE="alloy" `
   -p 8080:8080 yourimageidentifier
+
 ```
 
 Frontend Setup
