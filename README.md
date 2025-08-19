@@ -10,36 +10,37 @@ Our system is more than just a document viewer. It is an **AI-powered document i
 - Generates a **two-speaker podcast** directly from the analysis.  
 - Integrates seamlessly with **Adobe PDF Embed API** for interactive in-browser navigation.  
 
-This is not a demo hack — it is a **production-style, end-to-end pipeline** engineered for reliability, clarity, and extensibility.
+This Finale unifies our earlier Challenge 1A and 1B systems into a single, production‑style, end‑to‑end platform:
+- From 1A, we inherit precise, rule‑based PDF structure extraction that maps hierarchical headings to exact pages for rock‑solid navigation anchors.
+- From 1B, we inherit persona‑aware multi‑document retrieval and ranking that surfaces the most relevant snippets with concise, human‑readable rationales.
+- In the Finale, Gemini 2.5 Flash layers deep reasoning, multi‑perspective synthesis, and text‑to‑speech to generate 8‑category insights and a two‑speaker narrative podcast.
+
+This is more than a viewer: it understands structure, connects related ideas across PDFs, surfaces actionable insights, lets users interactively navigate content in the browser via Adobe PDF Embed API, and produces audio outputs.
 
 ---
 
 ## Why This Solution Stands Out
 Most hackathon projects demonstrate a single feature. Our system demonstrates a **full architecture** that blends rule-based intelligence, semantic retrieval, and large language models in harmony:
 
-1. **Hybrid Intelligence Approach**  
-   - **Rule-based (Round 1A):** Lightning-fast, deterministic heading extraction and page mapping.  
-   - **Semantic embeddings (Round 1B):** Persona-driven relevance ranking across prior documents.  
-   - **LLM reasoning (Finale):** Gemini 2.5 Flash adds deeper semantic connections and multi-perspective synthesis.  
+### Hybrid Intelligence
+- Rule‑based (from 1A): Deterministic, lightning‑fast heading extraction and page mapping using font features, patterns, and positional heuristics—no ML required for structure.
+- Semantic retrieval (from 1B): Persona + “job‑to‑be‑done” guided embeddings with TF‑IDF/cosine filtering ensure only the most relevant text flows forward.
+- LLM reasoning (Finale): Gemini 2.5 Flash performs the final, deeper semantic synthesis and powers high‑quality TTS.
 
-2. **Multi-Layer Retrieval**  
-   Instead of blindly prompting the LLM with entire documents (slow, expensive, error-prone), we:  
-   - Use **TF-IDF + cosine similarity** for speed.  
-   - Narrow down to the most relevant snippets.  
-   - Hand off only the meaningful text to Gemini for final reasoning.  
+### Multi‑Layer Retrieval
+- We never dump entire PDFs into the LLM.
+- TF‑IDF + cosine similarity narrows to the best snippets quickly and efficiently.
+- Only meaningful, context‑rich excerpts reach Gemini for final reasoning.
 
-3. **Seamless User Experience**  
-   - Upload multiple prior PDFs.  
-   - Upload a current “reading” PDF.  
-   - Highlight text → instantly get AI insights.  
-   - Click on a relevant prior snippet → preview PDF with page navigation.  
-   - Generate a podcast → listen directly in the browser.  
+### Seamless User Experience
+- Upload multiple “prior” PDFs.
+- Upload a current “reading” PDF.
+- Highlight text → instant AI insights.
+- Click a relevant snippet → PDF preview with navigation.
+- Generate a podcast → listen in the browser.
 
-4. **Offline-Ready**  
-   - All PDFs are stored locally.  
-   - Embeddings and retrieval logic run locally.  
-   - Gemini calls are the only external dependency, and even they are fault-tolerant with fallbacks.  
-
+### Built For Students: Fast, Efficient, Single‑Model Design
+We built this with students in mind—simple setup, low compute, responsive UX. The core retrieval runs on a single compact model (~80–100MB), ensuring it works efficiently and fast on typical laptops without GPUs. This keeps downloads light, memory use modest, and interactions snappy.
 ---
 
 ## How It Builds on Prior Rounds
@@ -106,9 +107,11 @@ We tested **Adobe PDF Embed API’s `goToLocation` method** for navigation.
    - (*goToLocation unreliable, but fallback navigation works*).  
 
 5. **Podcast Generation**  
-   - Gemini generates both **dialogue script + audio narration**.  
-   - Audio stored in `storage/audio`.  
+   - **Gemini** generates the **dialogue script**.  
+   - **Azure OpenAI (Text-to-Speech)** converts the script into **audio narration** with chosen voices.  
+   - Audio is stored in `storage/audio`.  
    - Streamed via `/audio/{filename}` endpoint.  
+
 
 ---
 
@@ -164,12 +167,10 @@ cd frontend
 npm install
 npm run dev
 ```
+## Environment Configuration
 
-Backend: http://localhost:8080
+### Backend `.env`
 
-Frontend: http://localhost:5173
-
-.env file for backend 
 ``` bash
 GEMINI_API_KEY=
 ADOBE_API_KEY=
@@ -182,10 +183,24 @@ AZURE_TTS_API_VERSION=
 AZURE_TTS_VOICE=
 ```
 
-.env file for frontend
+### Frontend `.env`
+
 ``` bash
 VITE_ADOBE_API_KEY=
 ```
+
+### Cold Start Note (Please Read)
+- On the very first run after building/pulling the image, Docker may perform initialization steps that can cause a cold start delay.
+- This can take up to ~10 minutes depending on hardware, disk, and network (if model downloads or validations run).
+- Subsequent runs will be much faster. Please wait patiently during this first start.
+
+## Local Development
+
+### Backend
+- URL: http://localhost:8080
+
+### Frontend
+- URL: http://localhost:5173
 
 ## Our Ideation Process: From Notes to Code
 
@@ -201,4 +216,18 @@ Our entire algorithm is a direct result of the manual brainstorming and mind-map
   <img src="https://res.cloudinary.com/dcyxnil16/image/upload/v1755545971/IMG-20250819-WA0005_zv66im.jpg" alt="Brainstorm Note 1" height="500px"/>
 </p>
 Caption: The step-by-step logic we drafted before writing the final code.
+
+We designed first and coded second. The 1A and 1B rounds came from deep, manual brainstorming:
+- 1A emphasized human‑intuition automation: how people visually detect structure became deterministic rules.
+- 1B emphasized persona‑centric triage: how people decide “what matters for this role” became embedding‑guided retrieval with succinct summaries.
+- The Finale stitches these strengths into a fluid UX with interactive preview and audio storytelling.
+
+## Operational Notes & Tips
+- If the PDF viewer doesn’t jump to a page: copy the page number from the UI hint and use the built‑in page navigator; our 1A page anchors keep references exact.
+- If podcast audio doesn’t appear immediately: refresh the insights, then check `storage/audio` and reload the player; first TTS invocations can add a short delay.
+- For best retrieval quality: upload representative “prior” PDFs that match the persona and task, then highlight specific text in the current PDF to trigger focused insights.
+
+
+---
+
 
