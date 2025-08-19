@@ -49,7 +49,7 @@ Most hackathon projects demonstrate a single feature. Our system demonstrates a 
 - Used in the Finale to ensure **precise navigation** inside PDFs.  
 - Without this, AI insights would lack anchors to real document locations.  
 
-### Round 1B: Persona-Based Analyzer ( refer to 'https://github.com/VinamraSuman17/ADOBE-TEAM-SPARK-1B')  
+### Round 1B: Persona-Based Analyzer (refer to 'https://github.com/VinamraSuman17/ADOBE-TEAM-SPARK-1B')  
 - Computes **semantic relevance** between prior documents and the current one.  
 - Generates **summaries** to explain why a snippet is relevant.  
 - In Finale, this forms the **retrieval backbone**, ensuring the right snippets reach Gemini.  
