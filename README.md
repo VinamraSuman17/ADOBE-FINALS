@@ -171,7 +171,7 @@ Frontend: http://localhost:5173
 
 .env file for backend 
 ``` bash
-GEMINI_API_KEY=AIzaSyCs273Qh2FdZbm-
+GEMINI_API_KEY=
 ADOBE_API_KEY=
 
 TTS_PROVIDER=azure
