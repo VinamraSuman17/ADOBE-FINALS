@@ -191,7 +191,7 @@ VITE_ADOBE_API_KEY=
 
 ### Cold Start Note (Please Read)
 - On the very first run after building/pulling the image, Docker may perform initialization steps that can cause a cold start delay.
-- This can take up to ~10 minutes depending on hardware, disk, and network (if model downloads or validations run).
+- This can take up to ~20 seconds.
 - Subsequent runs will be much faster. Please wait patiently during this first start.
 
 ## Local Development
