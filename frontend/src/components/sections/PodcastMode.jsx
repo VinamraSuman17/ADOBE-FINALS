@@ -279,10 +279,6 @@ const PodcastMode = ({ analysis, outline, isMultipleFiles, comparison }) => {
             {podcastScript.length} sections
           </span>
         </div>
-        <div className="hidden sm:flex items-center gap-2 text-xs text-gray-400">
-          <Info className="w-4 h-4" aria-hidden="true" />
-          <span>Text-to-speech generated locally by the browser</span>
-        </div>
       </header>
 
       {/* Status */}
