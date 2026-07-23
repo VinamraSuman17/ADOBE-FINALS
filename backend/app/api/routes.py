@@ -1,7 +1,6 @@
 from fastapi import APIRouter, UploadFile, Form, HTTPException
 from app.models.outline_extractor import ProperPDFExtractor
 from app.models.persona_analyzer import analyze_with_persona
-from app.models.section_highlighter import SectionHighlighter
 import json
 from uuid import uuid4
 from pathlib import Path

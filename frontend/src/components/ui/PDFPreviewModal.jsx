@@ -4,6 +4,8 @@ import Loader from "../common/Loader";
 import { toast } from "react-toastify";
 import NormalViewer from "./PdfViewer";
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
+
 const PDFPreviewModal = ({ snippet, isOpen, onClose }) => {
   const [pdfFile, setPdfFile] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -42,7 +44,7 @@ const PDFPreviewModal = ({ snippet, isOpen, onClose }) => {
       let file = null;
       try {
         const metadataResponse = await fetch(
-          `http://localhost:8080/pdf-metadata/${snippet.document_id}`
+          `${API_BASE_URL}/pdf-metadata/${snippet.document_id}`
         );
         if (metadataResponse.ok) {
           const metadataResult = await metadataResponse.json();
@@ -59,7 +61,7 @@ const PDFPreviewModal = ({ snippet, isOpen, onClose }) => {
 
       // Fallback to direct access
       if (!file) {
-        const directUrl = `http://localhost:8080/files/${snippet.document_id}.pdf`;
+        const directUrl = `${API_BASE_URL}/files/${snippet.document_id}.pdf`;
         file = await fetchAndCreateFile(
           directUrl,
           snippet.document_name || "document.pdf"
@@ -97,7 +99,7 @@ const PDFPreviewModal = ({ snippet, isOpen, onClose }) => {
   };
 
   const handleCopyLink = () => {
-    const link = `http://localhost:8080/files/${snippet.document_id}.pdf#page=${snippet.page}`;
+    const link = `${API_BASE_URL}/files/${snippet.document_id}.pdf#page=${snippet.page}`;
     navigator.clipboard.writeText(link);
     toast("🔗 PDF link copied!");
   };
@@ -105,7 +107,7 @@ const PDFPreviewModal = ({ snippet, isOpen, onClose }) => {
   const handleDownload = () => {
     const url = pdfFile
       ? URL.createObjectURL(pdfFile)
-      : `http://localhost:8080/files/${snippet.document_id}.pdf`;
+      : `${API_BASE_URL}/files/${snippet.document_id}.pdf`;
 
     const link = document.createElement("a");
     link.href = url;
@@ -211,7 +213,7 @@ const PDFPreviewModal = ({ snippet, isOpen, onClose }) => {
               <div className="bg-gray-900 rounded-lg">
                 <div className="w-full h-[80vh] overflow-y-scroll">
                   <NormalViewer
-                    pdfFile= { `http://localhost:8080/files/${snippet.document_id}.pdf#page=${snippet.page}`}
+                    pdfFile= { `${API_BASE_URL}/files/${snippet.document_id}.pdf#page=${snippet.page}`}
                     fileName="Sample.pdf"
                   />
                 </div>

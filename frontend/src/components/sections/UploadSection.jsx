@@ -41,6 +41,8 @@ import {
   GitGraph,
 } from "lucide-react";
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
+
 const UploadSection = ({
   onWorkflowComplete,
   onUploadSuccess,
@@ -102,7 +104,7 @@ const UploadSection = ({
       formData.append("user_session_id", sessionId);
 
       const response = await fetch(
-        "http://localhost:8080/ingest-prior-documents/",
+        `${API_BASE_URL}/ingest-prior-documents/`,
         {
           method: "POST",
           body: formData,
@@ -149,7 +151,7 @@ const UploadSection = ({
       formData.append("user_session_id", sessionId);
 
       const response = await fetch(
-        "http://localhost:8080/set-current-document/",
+        `${API_BASE_URL}/set-current-document/`,
         {
           method: "POST",
           body: formData,
@@ -194,7 +196,7 @@ const UploadSection = ({
       formData.append("page_number", selectionData.page.toString());
       formData.append("user_session_id", sessionId);
 
-      const response = await fetch("http://localhost:8080/analyze-selection/", {
+      const response = await fetch(`${API_BASE_URL}/analyze-selection/`, {
         method: "POST",
         body: formData,
       });
@@ -241,7 +243,7 @@ const UploadSection = ({
     setIsPodcastGenerating(true);
 
     try {
-      const response = await fetch("http://localhost:8080/generate-podcast/", {
+      const response = await fetch(`${API_BASE_URL}/generate-podcast/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

@@ -981,7 +981,7 @@ import google.generativeai as genai
 
 # ✅ Configure AI API (without branding)
 try:
-    genai.configure(api_key=os.getenv("API_KEY"))
+    genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
     print("✅ Advanced AI configured")
 except Exception as e:
     print(f"⚠️ AI configuration failed: {e}")

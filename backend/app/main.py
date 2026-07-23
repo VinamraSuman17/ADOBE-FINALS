@@ -12,6 +12,11 @@ load_dotenv()
 BASE_DIR = Path(__file__).resolve().parent.parent  # backend/
 STORAGE_DIR = BASE_DIR / "storage"
 
+# Create storage directories synchronously before mounting them
+(STORAGE_DIR / "audio").mkdir(parents=True, exist_ok=True)
+(STORAGE_DIR / "pdfs").mkdir(parents=True, exist_ok=True)
+(STORAGE_DIR / "temp").mkdir(parents=True, exist_ok=True)
+
 app = FastAPI(
     title="Adobe Challenge - AI-Powered PDF Analysis with Preview",
     description="Advanced document intelligence with Gemini AI integration, cross-document insights, podcast generation, and PDF preview",
@@ -160,6 +165,6 @@ if __name__ == "__main__":
         app, 
         host="0.0.0.0", 
         port=8080,
-        reload=True,
+        reload=False,
         log_level="info"
     )
